@@ -1,5 +1,5 @@
-#ifndef MAIN_H
-#define MAIN_H
+#ifndef THERMO_FUNCTIONS_H
+#define THERMO_FUNCTIONS_H
 
 double reduced_temperature(double);
 double reduced_pressure(double);
