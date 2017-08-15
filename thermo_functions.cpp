@@ -2,13 +2,13 @@
 #include <math.h>
 #include "thermo_functions.h"
 
-static double CELS_TO_KELVIN = 273.15;					// Conversion factor from [C] to [K]
+const double CELS_TO_KELVIN = 273.15;					// Conversion factor from [C] to [K]
 
-static double CRIT_TEMP_NOS = 36.4;						// Critical Temperature of NOS [C]
-static double CRIT_PRES_NOS = 7255;						// Critical Pressure of NOS [kPa]
-static double R = 0.008314;								// Universal Gas Constant [kJ/(mol*K)]
-static double MM_NOS = 0.044013;						// Molar Mass of Nitrous Oxide [kg/mol]
-static double R_SPEC_NOS = R / (MM_NOS);				// Specific Gas Constant of Nitrous	Oxide [kJ/(kg*K)]
+const double CRIT_TEMP_NOS = 36.4;						// Critical Temperature of NOS [C]
+const double CRIT_PRES_NOS = 7255;						// Critical Pressure of NOS [kPa]
+const double R_CONSTANT = 0.008314;						// Universal Gas Constant [kJ/(mol*K)]
+const double MM_NOS = 0.044013;							// Molar Mass of Nitrous Oxide [kg/mol]
+const double R_SPEC_NOS = R_CONSTANT / (MM_NOS);		// Specific Gas Constant of Nitrous	Oxide [kJ/(kg*K)]
 
 double volume_tank, mass_combined, temperature_tank;	// Initial conditions
 

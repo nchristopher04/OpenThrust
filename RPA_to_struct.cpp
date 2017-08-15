@@ -9,31 +9,6 @@ const int INTEGER_FILE_LENGTH = 110; // Length of csv table
 // File path of csv table 
 const string FILE_PATH = "C:/Users/hsaafan/Documents/visual studio 2017/Projects/RPA_to_struct/file.csv";
 
-struct RPA_Table
-{
-	double OF_Ratio;
-	double Chamber_Pressure;	// [psi]
-	double Nozzle_inlet;
-	double rho;					// [kg/m^3]
-	double Nozzle_exit; 
-	double Chamber_Temperture;	// [k]
-	double M_value;
-	double gamma;
-	double k_value;
-	double c;					// [m/s]
-	double Is_opt; 
-	double Is_vac; 
-	double Cf_opt;
-	double Cf_vac;
-	double c_factor;
-	double R_value;
-};
-
-struct Look_Up_Table 
-{
-	RPA_Table RPA_Array[INTEGER_FILE_LENGTH];
-};
-
 Look_Up_Table Create_Table_Array()
 {
 	ifstream file(FILE_PATH);			
@@ -89,6 +64,7 @@ Look_Up_Table Create_Table_Array()
 
 RPA_Table lookUp(double Chamber_Pressure, double OF_Ratio, Look_Up_Table Table)
 {
+	Chamber_Pressure = round(Chamber_Pressure);
 	for (int i = 0; i < sizeof(Table.RPA_Array); i++) 
 	{
 		if (Table.RPA_Array[i].OF_Ratio == OF_Ratio && Table.RPA_Array[i].Chamber_Pressure == Chamber_Pressure) 
