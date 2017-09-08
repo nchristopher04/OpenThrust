@@ -5,15 +5,15 @@
 
 using namespace std;
 
-const int INTEGER_FILE_LENGTH = 110; // Length of csv table
-// File path of csv table 
-const string FILE_PATH = "C:/Users/hsaafan/Documents/visual studio 2017/Projects/RPA_to_struct/file.csv";
+const int INTEGER_FILE_LENGTH = 110;			// Length of csv table
+const string FILE_PATH = ".\\file.csv";			// File path of csv table 
+const double UNIV_GAS_CONST = 8.314;			// [kJ/kmol*K]
 
 Look_Up_Table Create_Table_Array()
 {
 	ifstream file(FILE_PATH);			
 	string row;
-	string delimiter = ",";				// Only works for csv files because they are comma seperated
+	string delimiter = ",";						// Only works for csv files because they are comma seperated
 	Look_Up_Table Table;
 	RPA_Table all_structs[INTEGER_FILE_LENGTH];
 	int k = 0;
@@ -21,8 +21,8 @@ Look_Up_Table Create_Table_Array()
 	while (file.good())
 	{
 		getline(file, row);
-		if (k == 0){ k++; continue; }	// skip header
-		if (row.empty()) { continue; }	// skip empty rows
+		if (k == 0){ k++; continue; }			// skip header
+		if (row.empty()) { continue; }			// skip empty rows
 		int startS = 0;
 		int endS;
 
@@ -37,21 +37,22 @@ Look_Up_Table Create_Table_Array()
 		}
 		struct RPA_Table single;
 		// Input array into structure
-		single.OF_Ratio = rowArray[0];
-		single.Chamber_Pressure = rowArray[1];
-		single.Nozzle_inlet = rowArray[2];
-		single.Nozzle_exit = rowArray[3];
-		single.rho = rowArray[4];
-		single.Chamber_Temperture = rowArray[5];
-		single.M_value = rowArray[6];
-		single.gamma = rowArray[7];
-		single.k_value = rowArray[8];
-		single.c = rowArray[9];
-		single.Is_opt = rowArray[10];
-		single.Is_vac = rowArray[11];
-		single.Cf_opt = rowArray[12];
-		single.Cf_vac = rowArray[13];
-		single.c_factor = rowArray[14];
+		single.OF_Ratio = rowArray[0];						// Oxidizer/Fuel ratio
+		single.Chamber_Pressure = rowArray[1];				// Pressure of the chamber [psi]
+		single.Nozzle_inlet = rowArray[2];					// 
+		single.Nozzle_exit = rowArray[3];					//
+		single.rho = rowArray[4];							// [kg/m^3] Currently has no values
+		single.Chamber_Temperture = rowArray[5];			// Temperature of the chamber [K]
+		single.M_value = rowArray[6];						// [kg/kmol]
+		single.gamma = rowArray[7];							//
+		single.k_value = rowArray[8];						//
+		single.c = rowArray[9];								// Characteristic velocity [m/s]
+		single.Is_opt = rowArray[10];						// Specific impulse, optimal [s]
+		single.Is_vac = rowArray[11];						// Specific impulse, vacuum [s]
+		single.Cf_opt = rowArray[12];						// Thrust coefficient, optimal 
+		single.Cf_vac = rowArray[13];						// Thrust coefficient, vacuum
+		single.c_factor = rowArray[14];						//
+		single.R_value = UNIV_GAS_CONST / single.M_value;	// [kJ/kg*K]
 
 		// Input structures into array and then into another structure
 		// Did this because c++ can't return arrays of structs
@@ -64,7 +65,9 @@ Look_Up_Table Create_Table_Array()
 
 RPA_Table lookUp(double Chamber_Pressure, double OF_Ratio, Look_Up_Table Table)
 {
+	// Rounds chamber pressure and OF ratio to grab closest value from table
 	Chamber_Pressure = round(Chamber_Pressure);
+	OF_Ratio = round(OF_Ratio * 10) / 10;
 	for (int i = 0; i < sizeof(Table.RPA_Array); i++) 
 	{
 		if (Table.RPA_Array[i].OF_Ratio == OF_Ratio && Table.RPA_Array[i].Chamber_Pressure == Chamber_Pressure) 

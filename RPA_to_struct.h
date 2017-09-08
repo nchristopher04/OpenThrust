@@ -1,6 +1,7 @@
 #ifndef RPA_TO_STRUCT_H
 #define RPA_TO_STRUCT_H
 
+
 struct RPA_Table
 {
 	double OF_Ratio;
