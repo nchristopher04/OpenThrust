@@ -7,7 +7,7 @@ using namespace std;
 
 const int INTEGER_FILE_LENGTH = 110; // Length of csv table
 // File path of csv table 
-const string FILE_PATH = "C:/Users/hsaafan/Documents/visual studio 2017/Projects/RPA_to_struct/file.csv";
+const string FILE_PATH = "file.csv";
 
 Look_Up_Table Create_Table_Array()
 {

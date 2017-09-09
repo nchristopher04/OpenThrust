@@ -9,33 +9,39 @@
 
 template <typename Arg, typename... Args>
 void output(oftream& simFile, Arg&& arg, Args&&... args) {
-	out << forward<Arg>(arg);
+	simfile << forward<Arg>(arg);
 	using expander = int[];
 	(void)expander {
-		0, (void(out << ',' << forward<Args>(args)), 0)...
+		0, (void(simfile << ',' << forward<Args>(args)), 0)...
 	};
-} //this will be a variadic print function that will output all parameters passed to it to output.csv
+	simFile<< '\n';
+} //this is a variadic print function that will output all parameters passed to it to output.csv
 
 int main() {
-	ofstream simFile;
-	simFile.open("output.csv");
-	simFile << "Liquid Mass   ,  Chamber Pressure , Thrust , Mass Flow Rate "; //setup basic output format
-
+	ofstream simFile("output.csv");
+	simFile << "Time (ms), Liquid Mass   ,  Chamber Pressure , Thrust , Mass Flow Rate "<<'\n'; //setup basic output format
+	cout << "Input initial params." << endl;
+	cout << "NOS Temperature:";
+	cin >> T1;
+	cout << "Chamber Pressure";
+	cin >> Pc;
 	for (int x; x < 1000; x++) { //time steps
 		RPALookup(Pc, OF, k, R, Tc);
-		mDot = massFlowRate(nozzleArea, Pc, k, R, Tc);
+		//mDot = massFlowRate(nozzleArea, Pc, k, R, Tc);
+		mDot=injectorFlow(T1, Pc);
 		if (mDot < 0) { 
 			throw invalid_argument ("massFlowNegative");
 			break; }
 		else { oxyMass -= mDot*timeStep; }
-		//compute new chamber pressure
+		Pc = ;//compute new chamber pressure
 		time = x*timeStep;
-		output();
 
 		if (oxyMass <= 0.01) {
 			cout << "Tank empty";
 			break;
 		};
+		Thrust = ;//thrust model required
+		output(simFile,time, oxyMass,Pc,Thrust,mDot);
 	}
 
 }
@@ -58,4 +64,3 @@ void RPALookup(float Pc, double OF, double& k, double& R, double& Tc) {
 	R = CombustionProps.R_value;
 	Tc = CombustionProps.Chamber_Temperture;
 };
-
