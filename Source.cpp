@@ -4,10 +4,11 @@
 #include "thermo_functions.h"
 #include <fstream>
 #include <stdexcept>
+#include "injector_Model.h"
+using namespace std;
 
 const double PSI_TO_PA = 6894.76; 
 
-using namespace std;
 // Will be defined later in program
 double oxyMass;							// Initial oxidizer mass [kg]
 double Pc;								// Chamber pressure [psi]
@@ -15,6 +16,10 @@ double k;								// Heat capacity ratio []
 double R;								// Specific gas constant [kJ/kg*k]
 double Tc;								// Chamber temperature [k]
 double Cf;								// Thrust coefficient []
+double T1;								// NOS Tank Temperature
+struct options {
+	int flowModel = 1;
+};
 
 // Already defined
 double At = 0.00153058;					// Nozzle throat area [m^2] (taken from CAD drawing)
@@ -24,13 +29,29 @@ double timeStep = 0.1;					// [s]
 double mDotNozzle, mDotInjector;		// Mass flow rates at the nozzle and the injector [kg/s]
 double time[1000], thrust[1000];		// Output arrays that give thrust over time
 
+double massFlowRateInjector(double nozzleFlow, double OF_ratio);
+double massFlowRate(double nozzleArea, double Pc, double k, double R, double Tc);
+void RPALookup(float Pc, double OF, double& k, double& R, double& Tc); //Forward declarations
+double thrustCoefficient(double Patm, double A2, double Pc);
+
+template <typename Arg, typename... Args>
+void output(oftream& simFile, Arg&& arg, Args&&... args) {
+	simfile << forward<Arg>(arg);
+	using expander = int[];
+	(void)expander {
+		0, (void(simfile << ',' << forward<Args>(args)), 0)...
+	};
+	simFile << '\n';
+} //this is a variadic print function to output.csv
+
+
 int main() {
 	ofstream simFile("output.csv");
-	simFile << "Time (ms), Liquid Mass   ,  Chamber Pressure , Thrust , Mass Flow Rate " << '\n'; //setup basic output format
+	simFile << "Time (s), Liquid Mass   ,  Chamber Pressure , Thrust , Mass Flow Rate " << '\n'; //setup basic output format
 	cout << "Input initial params." << endl;
-	cout << "NOS Temperature:";
+	cout << "NOS Temperature; Celcius";
 	cin >> T1;
-	cout << "Chamber Pressure";
+	cout << "Abs. Chamber Pressure; PSI";
 	cin >> Pc;
 
 	cout << "Input initial oxidizer mass in [kg]:  ";
@@ -42,35 +63,36 @@ int main() {
 		
 		RPALookup(Pc, OF, k, R, Tc);
 		mDotNozzle = massFlowRate(At, Pc, k, R, Tc);
-		mDotInjector = massFlowRateInjector(mDotNozzle, OF);
+		if (options.flowModel_value == 2) {
+			int PcRound10 = Pc; //cast chamber pressure to int.
+			PcRound10 += 5;
+			PcRound10 -= PcRound10 % 10; 
+			mDotInjector = injectorModel(T1, PcRound10)
+		}
+		else mDotInjector = massFlowRateInjector(mDotNozzle, OF);
 		Cf = thrustCoefficient(14.7, A2, Pc);
 
-
-		if (mDotNozzle < 0) { throw "massFlowNegative"; break; }
-		else { oxyMass -= mDotInjector*timeStep; }
+		try {
+			if (mDotNozzle < 0 || mDotInjector < 0) { throw "massFlowNegative"; }
+		}
+		catch (exception& e)
+		{
+			cout << e.what() << '\n'; //catch exception, display to user and break loop
+			break;
+		}
+		oxyMass -= mDotInjector*timeStep; 
 
 		// Creates outputs for each timestep
 
 		time[x] = x*timeStep;
 		thrust[x] = At*(Pc*PSI_TO_PA)*Cf;
 		cout << "T+" << time << " s =>>> Oxy Mass: " <<  oxyMass << "kg | Chamber Pressure: " <<  Pc << " psi" << endl;
-		output(time, oxyMass, Pc);//output to csv
+		output(simFile,time, oxyMass, Pc);//output to csv
 
 		if (oxyMass <= 0.01) { cout << "Empty"; break; };
 	}
 
 }
-
-template <typename Arg, typename... Args>
-void output(oftream& simFile, Arg&& arg, Args&&... args) {
-	simfile << forward<Arg>(arg);
-	using expander = int[];
-	(void)expander {
-		0, (void(simfile << ',' << forward<Args>(args)), 0)...
-	};
-	simFile << '\n';
-} //this is a variadic print function output.csv
-
 
 double massFlowRate(double nozzleArea, double Pc, double k, double R, double Tc) {
 	// Calculates mass flow rate out of the nozzle
