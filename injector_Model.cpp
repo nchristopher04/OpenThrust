@@ -21,7 +21,7 @@
  * 
  */
 
-
+#define _USE_MATH_DEFINES // define constants for C++ 
 #include <iostream>
 #include <cmath>
 #include <sstream>
@@ -91,7 +91,7 @@ double injectorModel(double T1, double P2F)
 	L/=1000;//(m)
 	Ks/=1000;//(m)
 
-	double A= N*M_PI*Di*Di/4;//m^3
+	double A= N**Di*Di/4;//m^3
         
 
 	Cd=Cvc/sqrt(1+N*(k+(f*L/Di))+Aratio*Aratio); //discharge coeff for large L/D (ie new injector)

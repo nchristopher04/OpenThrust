@@ -21,7 +21,7 @@
  * 
  */
 
-
+#define _USE_MATH_DEFINES // define constants for C++
 #include <iostream>
 #include <cmath>
 

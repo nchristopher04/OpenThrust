@@ -34,6 +34,17 @@ double massFlowRate(double nozzleArea, double Pc, double k, double R, double Tc)
 void RPALookup(float Pc, double OF, double& k, double& R, double& Tc); //Forward declarations
 double thrustCoefficient(double Patm, double A2, double Pc);
 
+template <typename Arg, typename... Args>
+void output(ofstream& out, Arg&& arg, Args&&... args)
+{
+	out << forward<Arg>(arg);
+	using expander = int[];
+	(void)expander {
+		0, (void(out << ',' << std::forward<Args>(args)), 0)...
+	};
+	out << '\n';
+} //this is a variadic print function to output.csv
+
 int main() {
 	ofstream simFile("output.csv");
 	simFile << "Time (s), Liquid Mass   ,  Chamber Pressure , Thrust , Mass Flow Rate " << '\n'; //setup basic output format
@@ -122,21 +133,11 @@ void RPALookup(float Pc, double OF, double& k, double& R, double& Tc) {
 	Tc = CombustionProps.Chamber_Temperture;
 }
 
-template <typename Arg, typename... Args>
-void output(ofstream& out, Arg&& arg, Args&&... args)
-{
-	out << forward<Arg>(arg);
-	using expander = int[];
-	(void)expander {
-		0, (void(out << ',' << std::forward<Args>(args)), 0)...
-	};
-	out << '\n';
-} //this is a variadic print function to output.csv
-
 double tankProps(double oxyMass, double Pc, double &Temp, double &TankPressure) {
 	
 	
-	TankPressure = nox_vp(Temp);
+	//TankPressure = nox_vp(Temp);
+	return 0;
 }
 //NOS properties from Modelling the Nitrous Run tank Emptying
 const float pCrit = 72.51f; /* critical pressure, Bar Abs */

@@ -24,7 +24,7 @@ struct RPA_Table
 
 struct Look_Up_Table
 {
-	RPA_Table RPA_Array[INTEGER_FILE_LENGTH];
+	RPA_Table RPA_Array[INTEGER_FILE_LENGTH]; 
 };
 
 Look_Up_Table Create_Table_Array();

@@ -111,6 +111,24 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="injector_Model.cpp" />
+    <ClCompile Include="Nozzle_flow.cpp" />
+    <ClCompile Include="RPA_to_struct.cpp" />
+    <ClCompile Include="Source.cpp" />
+    <ClCompile Include="thermo_functions.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="injector_Model.h" />
+    <ClInclude Include="RPA_to_struct.h" />
+    <ClInclude Include="thermo_functions.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="N20_100_1000PSI.txt" />
+    <Text Include="N20_Neg30_35T.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="file.csv" />
+    <None Include="output.csv" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
