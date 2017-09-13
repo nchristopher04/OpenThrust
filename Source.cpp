@@ -18,8 +18,8 @@ double Tc;								// Chamber temperature [k]
 double Cf;								// Thrust coefficient []
 double T1;								// NOS Tank Temperature
 struct options {
-	int flowModel = 1;
-};
+	int flowModel;
+}MainX;
 
 // Already defined
 double At = 0.00153058;					// Nozzle throat area [m^2] (taken from CAD drawing)
@@ -33,17 +33,6 @@ double massFlowRateInjector(double nozzleFlow, double OF_ratio);
 double massFlowRate(double nozzleArea, double Pc, double k, double R, double Tc);
 void RPALookup(float Pc, double OF, double& k, double& R, double& Tc); //Forward declarations
 double thrustCoefficient(double Patm, double A2, double Pc);
-
-template <typename Arg, typename... Args>
-void output(oftream& simFile, Arg&& arg, Args&&... args) {
-	simfile << forward<Arg>(arg);
-	using expander = int[];
-	(void)expander {
-		0, (void(simfile << ',' << forward<Args>(args)), 0)...
-	};
-	simFile << '\n';
-} //this is a variadic print function to output.csv
-
 
 int main() {
 	ofstream simFile("output.csv");
@@ -63,11 +52,11 @@ int main() {
 		
 		RPALookup(Pc, OF, k, R, Tc);
 		mDotNozzle = massFlowRate(At, Pc, k, R, Tc);
-		if (options.flowModel_value == 2) {
+		if (MainX.flowModel == 2) {
 			int PcRound10 = Pc; //cast chamber pressure to int.
 			PcRound10 += 5;
 			PcRound10 -= PcRound10 % 10; 
-			mDotInjector = injectorModel(T1, PcRound10)
+			mDotInjector = injectorModel(T1, PcRound10);
 		}
 		else mDotInjector = massFlowRateInjector(mDotNozzle, OF);
 		Cf = thrustCoefficient(14.7, A2, Pc);
@@ -131,4 +120,40 @@ void RPALookup(float Pc, double OF, double& k, double& R, double& Tc) {
 	k = CombustionProps.k_value;
 	R = CombustionProps.R_value;
 	Tc = CombustionProps.Chamber_Temperture;
+}
+
+template <typename Arg, typename... Args>
+void output(ofstream& out, Arg&& arg, Args&&... args)
+{
+	out << forward<Arg>(arg);
+	using expander = int[];
+	(void)expander {
+		0, (void(out << ',' << std::forward<Args>(args)), 0)...
+	};
+	out << '\n';
+} //this is a variadic print function to output.csv
+
+double tankProps(double oxyMass, double Pc, double &Temp, double &TankPressure) {
+	
+	
+	TankPressure = nox_vp(Temp);
+}
+//NOS properties from Modelling the Nitrous Run tank Emptying
+const float pCrit = 72.51f; /* critical pressure, Bar Abs */
+const float rhoCrit = 452.0f; /* critical density, kg/m3 */
+const float ZCrit = 0.28f; /* critical compressibility factor */
+const float gamma = 1.3; /* average over subcritical range */
+
+/* Nitrous oxide vapour pressure, Bar */
+double nox_vp(double T_Celcius)
+{
+	const float p[4] = { 1.0f, 1.5f, 2.5f, 5.0f };
+	const float b[4] = { -6.71893f, 1.35966f, -1.3779f, -4.051f };
+	double Tr = reduced_temperature(T_Celcius);
+	float rab = 1.0 - Tr;
+	float shona = 0.0;
+	for (int dd = 0; dd < 4; dd++)
+		shona += b[dd] * pow(rab, p[dd]);
+	double bob = pCrit * exp((shona / Tr));
+	return(bob);
 }
