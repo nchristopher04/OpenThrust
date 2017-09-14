@@ -56,7 +56,7 @@ int main() {
 	cout << "Input initial oxidizer mass in [kg]:  ";
 	cin >> oxyMass;
 
-	// MainX.flowModel = 2;
+	 MainX.flowModel = 2;
 	
 	for (int x = 0; x < 1000; x++) { //time steps
 		
@@ -86,7 +86,8 @@ int main() {
 
 		time[x] = x*timeStep;
 		thrust[x] = At*(Pc*PSI_TO_PA)*Cf;
-		cout << "T+" << time[x] << " s =>>> Oxy Mass: " <<  oxyMass << "kg | Chamber Pressure: " <<  Pc << " psi" << endl;
+		cout << "T+" << time[x] << " s =>>> Oxy Mass: " <<  oxyMass << "kg | Chamber Pressure: " <<  Pc << " psi | " << 
+			"Injector flow rate: " << mDotInjector << " kg/s" << endl;
 		output(simFile,time[x], oxyMass, Pc, thrust[x], mDotInjector);//output to csv
 
 		if (oxyMass <= 0.01) { cout << "Empty"; cin; break; };
