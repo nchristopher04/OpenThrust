@@ -13,12 +13,14 @@ const double PSI_TO_PA = 6894.76;
 
 // Will be defined later in program
 double oxyMass;							// Initial oxidizer mass [kg]
-float Pc;								// Chamber pressure [psi]
+double Pc, PcNew;						// Chamber pressure [psi]
 double k;								// Heat capacity ratio []
 double R;								// Specific gas constant [kJ/kg*k]
 double Tc;								// Chamber temperature [k]
 double Cf;								// Thrust coefficient []
 double T1;								// NOS Tank Temperature
+int PcRound10;							// Casts chamber pressure to integer
+double err;								// Used for calculating relative error
 struct options {
 	int flowModel;
 }MainX;
@@ -26,7 +28,7 @@ struct options {
 // Already defined
 double At = 0.000382646;				// Nozzle throat area [m^2]
 double A2 = 0.00181001;					// Nozzle exit area [m^2]
-float OF = 2.1f;						// Oxidizer-fuel ratio assumed constant to start
+double OF = 2.1;						// Oxidizer-fuel ratio assumed constant to start
 double timeStep = 0.1;					// [s]
 double mDotNozzle, mDotInjector;		// Mass flow rates at the nozzle and the injector [kg/s]
 double time[1000], thrust[1000];		// Output arrays that give thrust over time
@@ -64,10 +66,18 @@ int main() {
 		RPALookup(Pc, OF, k, R, Tc);
 		mDotNozzle = massFlowRate(At, Pc, k, R, Tc);
 		if (MainX.flowModel == 2) {
-			int PcRound10 = Pc; //cast chamber pressure to int.
-			PcRound10 += 5;
-			PcRound10 -= PcRound10 % 10; 
-			mDotInjector = injectorModel(T1, PcRound10);
+			for (int i = 0; i < 100; i++) {
+				PcRound10 = Pc; //cast chamber pressure to int.
+				PcRound10 += 5;
+				PcRound10 -= PcRound10 % 10;
+				mDotInjector = injectorModel(T1, PcRound10);
+				mDotNozzle = massFlowRateNozzle(mDotInjector, OF);
+				PcNew = calcPc(At, mDotNozzle, k, R, Tc);
+				err = 100 * (Pc - PcNew) / Pc;
+				cout << PcNew;
+				if (err < 5) { Pc = PcNew; break; }
+				else if (i == 99) { throw "PressureCalculatorDiverged"; }
+			}
 		}
 		else mDotInjector = massFlowRateInjector(mDotNozzle, OF);
 		Cf = thrustCoefficient(14.7, A2, Pc);
@@ -95,21 +105,38 @@ int main() {
 
 }
 
-double massFlowRate(double nozzleArea, double Pc, double k, double R, double Tc) {
-	// Calculates mass flow rate out of the nozzle
+double massFlowRate(double nozzleThroatArea, double Pc, double k, double R, double Tc) {
+	// Calculates mass flow rate out of the nozzle using equations from the paper
 	// Inputs in [m^2], [psi], [], [kJ/kg*K], [k]
 	// Outputs in [kg/s]
 	Pc = Pc*PSI_TO_PA;
-	double mDot = (nozzleArea*Pc*k*sqrt( pow((2 /(k + 1)), ((k + 1) / (k - 1))))) / sqrt(k*R*Tc);
+	double mDot = (nozzleThroatArea*Pc*k*sqrt( pow((2 /(k + 1)), ((k + 1) / (k - 1))))) / sqrt(k*R*Tc);
 	return mDot;
 }
 
-double massFlowRateInjector(double nozzleFlow, double OF_ratio) {
+double calcPc(double nozzleThroatArea, double mDotNoz, double k, double R, double Tc) {
+	// Calculates mass chamber pressure
+	// Inputs in [m^2], [kg/s], [], [kJ/kg*K], [k]
+	// Outputs in [psi]
+	double Pc = (mDotNoz*sqrt(k*R*Tc))/(nozzleThroatArea * k * sqrt(pow((2 / (k + 1)), ((k + 1) / (k - 1)))));
+	Pc = Pc / (PSI_TO_PA);
+	return Pc;
+}
+
+double massFlowRateInjector(double mDotNoz, double OF_ratio) {
 	// Calculates mass flow rate out of the injector
 	// Inputs in [kg/s]
 	// Outputs in [kg/s]
-	double mDotI = nozzleFlow*(OF_ratio / (1 + OF_ratio));
+	double mDotI = mDotNoz*(OF_ratio / (1 + OF_ratio));
 	return mDotI;
+}
+
+double massFlowRateNozzle(double mDotI, double OF_ratio) {
+	// Calculates mass flow rate out of the nozzle
+	// Inputs in [kg/s]
+	// Outputs in [kg/s]
+	double mDotNoz = mDotI*((1 + OF_ratio) / OF_ratio);
+	return mDotNoz;
 }
 
 double thrustCoefficient(double Patm, double A2, double Pc) {
@@ -123,7 +150,7 @@ double thrustCoefficient(double Patm, double A2, double Pc) {
 	return Cf; 
 }
 
-void RPALookup(float Pc, float OF, double &k, double &R, double &Tc) {
+void RPALookup(float Pc, double OF, double &k, double &R, double &Tc) {
 	// Find k, R, Tc from table and return them to the program
 	// Inputs in [psi], []
 	// No output but stores values in variables k, R, Tc
