@@ -49,7 +49,7 @@ Look_Up_Table Create_Table_Array()
 		single.Cf_opt = rowArray[12];						// Thrust coefficient, optimal 
 		single.Cf_vac = rowArray[13];						// Thrust coefficient, vacuum
 		single.c_factor = rowArray[14];						//
-		single.R_value = UNIV_GAS_CONST / single.M_value;	// [kJ/kg*K]
+		single.R_value = (UNIV_GAS_CONST / single.M_value)*1000;	// [kJ/kg*K]
 
 		// Input structures into vector and then into another structure
 		Table.RPA_Vector.push_back(single);

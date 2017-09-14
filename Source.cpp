@@ -24,13 +24,13 @@ struct options {
 }MainX;
 
 // Already defined
-double At = 0.00153058;					// Nozzle throat area [m^2] (taken from CAD drawing)
-double A2 = 0.00724004;					// Nozzle exit area [m^2] (taken from CAD drawing)
+double At = 0.000382646;				// Nozzle throat area [m^2]
+double A2 = 0.00181001;					// Nozzle exit area [m^2]
 float OF = 2.1f;						// Oxidizer-fuel ratio assumed constant to start
 double timeStep = 0.1;					// [s]
 double mDotNozzle, mDotInjector;		// Mass flow rates at the nozzle and the injector [kg/s]
 double time[1000], thrust[1000];		// Output arrays that give thrust over time
-
+Look_Up_Table Table_Array = Create_Table_Array();
 
 
 template <typename Arg, typename... Args>
@@ -55,6 +55,8 @@ int main() {
 
 	cout << "Input initial oxidizer mass in [kg]:  ";
 	cin >> oxyMass;
+
+	// MainX.flowModel = 2;
 	
 	for (int x = 0; x < 1000; x++) { //time steps
 		
@@ -115,7 +117,7 @@ double thrustCoefficient(double Patm, double A2, double Pc) {
 	// Ouput is unitless
 	Patm = Patm*PSI_TO_PA;
 	Pc = Pc*PSI_TO_PA;
-	double C12 = 977;						//calculate C1,2
+	double C12 = 2.23;						//calculate C1,2
 	double Cf = C12 - (Patm*A2) / (Pc*At);
 	return Cf; 
 }
@@ -125,7 +127,7 @@ void RPALookup(float Pc, float OF, double &k, double &R, double &Tc) {
 	// Inputs in [psi], []
 	// No output but stores values in variables k, R, Tc
 	// Stored in [], [kJ/kg*K], [k]
-	RPA_Table CombustionProps = lookUp(Pc, OF, Create_Table_Array());
+	RPA_Table CombustionProps = lookUp(Pc, OF, Table_Array);
 	k = CombustionProps.k_value;
 	R = CombustionProps.R_value;
 	Tc = CombustionProps.Chamber_Temperture;
