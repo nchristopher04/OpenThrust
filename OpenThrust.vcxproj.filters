@@ -41,6 +41,9 @@
     <ClInclude Include="thermo_functions.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Source.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Text Include="N20_100_1000PSI.txt" />

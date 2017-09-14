@@ -5,13 +5,15 @@
 #include <fstream>
 #include <stdexcept>
 #include "injector_Model.h"
+#include "Source.h"
+
 using namespace std;
 
 const double PSI_TO_PA = 6894.76; 
 
 // Will be defined later in program
 double oxyMass;							// Initial oxidizer mass [kg]
-double Pc;								// Chamber pressure [psi]
+float Pc;								// Chamber pressure [psi]
 double k;								// Heat capacity ratio []
 double R;								// Specific gas constant [kJ/kg*k]
 double Tc;								// Chamber temperature [k]
@@ -24,15 +26,12 @@ struct options {
 // Already defined
 double At = 0.00153058;					// Nozzle throat area [m^2] (taken from CAD drawing)
 double A2 = 0.00724004;					// Nozzle exit area [m^2] (taken from CAD drawing)
-double OF = 2.1;						// Oxidizer-fuel ratio assumed constant to start
+float OF = 2.1f;						// Oxidizer-fuel ratio assumed constant to start
 double timeStep = 0.1;					// [s]
 double mDotNozzle, mDotInjector;		// Mass flow rates at the nozzle and the injector [kg/s]
 double time[1000], thrust[1000];		// Output arrays that give thrust over time
 
-double massFlowRateInjector(double nozzleFlow, double OF_ratio);
-double massFlowRate(double nozzleArea, double Pc, double k, double R, double Tc);
-void RPALookup(float Pc, double OF, double& k, double& R, double& Tc); //Forward declarations
-double thrustCoefficient(double Patm, double A2, double Pc);
+
 
 template <typename Arg, typename... Args>
 void output(ofstream& out, Arg&& arg, Args&&... args)
@@ -60,7 +59,6 @@ int main() {
 	for (int x = 0; x < 1000; x++) { //time steps
 		
 		// Finds all relevant values for thrust
-		
 		RPALookup(Pc, OF, k, R, Tc);
 		mDotNozzle = massFlowRate(At, Pc, k, R, Tc);
 		if (MainX.flowModel == 2) {
@@ -122,7 +120,7 @@ double thrustCoefficient(double Patm, double A2, double Pc) {
 	return Cf; 
 }
 
-void RPALookup(float Pc, double OF, double& k, double& R, double& Tc) {
+void RPALookup(float Pc, float OF, double &k, double &R, double &Tc) {
 	// Find k, R, Tc from table and return them to the program
 	// Inputs in [psi], []
 	// No output but stores values in variables k, R, Tc
@@ -143,7 +141,7 @@ double tankProps(double oxyMass, double Pc, double &Temp, double &TankPressure) 
 const float pCrit = 72.51f; /* critical pressure, Bar Abs */
 const float rhoCrit = 452.0f; /* critical density, kg/m3 */
 const float ZCrit = 0.28f; /* critical compressibility factor */
-const float gamma = 1.3; /* average over subcritical range */
+const float gamma = 1.3f; /* average over subcritical range */
 
 /* Nitrous oxide vapour pressure, Bar */
 double nox_vp(double T_Celcius)

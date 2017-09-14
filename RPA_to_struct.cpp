@@ -5,7 +5,7 @@
 
 using namespace std;
 
-const int INTEGER_FILE_LENGTH = 110;			// Length of csv table
+//const int INTEGER_FILE_LENGTH = 110;			// Length of csv table
 const string FILE_PATH = ".\\file.csv";			// File path of csv table 
 const double UNIV_GAS_CONST = 8.314;			// [kJ/kmol*K]
 
@@ -15,16 +15,17 @@ Look_Up_Table Create_Table_Array()
 	string row;
 	string delimiter = ",";						// Only works for csv files because they are comma seperated
 	Look_Up_Table Table;
-	RPA_Table all_structs[INTEGER_FILE_LENGTH];
+	Table.RPA_Vector.reserve(4200);
+	RPA_Table single;
 	int k = 0;
+	int startS, endS;
 	string cell;
 	while (file.good())
 	{
 		getline(file, row);
 		if (k == 0){ k++; continue; }			// skip header
 		if (row.empty()) { continue; }			// skip empty rows
-		int startS = 0;
-		int endS;
+		startS = 0;
 
 		double rowArray[15];
 
@@ -35,7 +36,6 @@ Look_Up_Table Create_Table_Array()
 			row = row.substr((endS+1), row.length());
 			rowArray[i] = stod(cell);
 		}
-		struct RPA_Table single;
 		// Input array into structure
 		single.OF_Ratio = rowArray[0];						// Oxidizer/Fuel ratio
 		single.Chamber_Pressure = rowArray[1];				// Pressure of the chamber [psi]
@@ -57,7 +57,7 @@ Look_Up_Table Create_Table_Array()
 		// Input structures into array and then into another structure
 		// Did this because c++ can't return arrays of structs
 		// k-1 to skip header row
-		Table.RPA_Array[k-1] = single;
+		Table.RPA_Vector.push_back(single);
 		k++;
 	}
 	return Table;
@@ -68,11 +68,11 @@ RPA_Table lookUp(double Chamber_Pressure, double OF_Ratio, Look_Up_Table Table)
 	// Rounds chamber pressure and OF ratio to grab closest value from table
 	Chamber_Pressure = round(Chamber_Pressure);
 	OF_Ratio = round(OF_Ratio * 10) / 10;
-	for (int i = 0; i < sizeof(Table.RPA_Array); i++) 
+	for (int i = 0; i < Table.RPA_Vector.size(); i++) 
 	{
-		if (Table.RPA_Array[i].OF_Ratio == OF_Ratio && Table.RPA_Array[i].Chamber_Pressure == Chamber_Pressure) 
+		if (Table.RPA_Vector[i].OF_Ratio == OF_Ratio && Table.RPA_Vector[i].Chamber_Pressure == Chamber_Pressure) 
 		{
-			return Table.RPA_Array[i];
+			return Table.RPA_Vector[i];
 		}
 	}
 }

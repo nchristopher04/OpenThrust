@@ -1,5 +1,5 @@
 #include <iostream>
-#include <math.h>
+#include <cmath>
 #include "thermo_functions.h"
 
 const double CELS_TO_KELVIN = 273.15;					// Conversion factor from [C] to [K]

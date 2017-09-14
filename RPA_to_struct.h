@@ -1,6 +1,6 @@
 #ifndef RPA_TO_STRUCT_H
 #define RPA_TO_STRUCT_H
-
+#include <vector>
 
 struct RPA_Table
 {
@@ -24,7 +24,7 @@ struct RPA_Table
 
 struct Look_Up_Table
 {
-	RPA_Table RPA_Array[INTEGER_FILE_LENGTH]; 
+	std::vector<RPA_Table> RPA_Vector;
 };
 
 Look_Up_Table Create_Table_Array();

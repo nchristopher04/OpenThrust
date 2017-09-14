@@ -27,7 +27,7 @@
 
 using namespace std;
 
-int main()
+int apogee()
 {
 	/*
 	 * This is a simple program to approximate apogee of our rocket
