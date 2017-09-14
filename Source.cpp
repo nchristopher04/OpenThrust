@@ -13,7 +13,7 @@ const double PSI_TO_PA = 6894.76;
 
 // Will be defined later in program
 double oxyMass;							// Initial oxidizer mass [kg]
-double Pc, PcNew;						// Chamber pressure [psi]
+double Pc, PcNew, PcOld;				// Chamber pressure [psi]
 double k;								// Heat capacity ratio []
 double R;								// Specific gas constant [kJ/kg*k]
 double Tc;								// Chamber temperature [k]
@@ -66,15 +66,16 @@ int main() {
 		RPALookup(Pc, OF, k, R, Tc);
 		mDotNozzle = massFlowRate(At, Pc, k, R, Tc);
 		if (MainX.flowModel == 2) {
+			PcOld = Pc;
 			for (int i = 0; i < 100; i++) {
-				PcRound10 = Pc; //cast chamber pressure to int.
+				PcRound10 = PcOld; //cast chamber pressure to int.
 				PcRound10 += 5;
 				PcRound10 -= PcRound10 % 10;
 				mDotInjector = injectorModel(T1, PcRound10);
 				mDotNozzle = massFlowRateNozzle(mDotInjector, OF);
 				PcNew = calcPc(At, mDotNozzle, k, R, Tc);
-				err = 100 * (Pc - PcNew) / Pc;
-				cout << PcNew;
+				err = 100 * (PcOld - PcNew) / PcOld;
+				PcOld = PcNew;
 				if (err < 5) { Pc = PcNew; break; }
 				else if (i == 99) { throw "PressureCalculatorDiverged"; }
 			}
