@@ -51,6 +51,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="output.csv" />
-    <None Include="file.csv" />
+    <None Include="RPA_Output_Table.csv" />
   </ItemGroup>
 </Project>

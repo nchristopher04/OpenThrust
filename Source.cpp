@@ -46,11 +46,11 @@ void output(ofstream& out, Arg&& arg, Args&&... args)
 
 int main() {
 	ofstream simFile("output.csv");
-	simFile << "Time (s), Liquid Mass   ,  Chamber Pressure , Thrust , Mass Flow Rate " << '\n'; //setup basic output format
+	simFile << "Time (s), Liquid Mass (kg)  ,  Chamber Pressure (PSI), Thrust (N), Mass Flow Rate (kg/s)" << '\n'; //setup basic output format
 	cout << "Input initial params." << endl;
-	cout << "NOS Temperature; Celcius";
+	cout << "Initial NOS Temperature [Celsius]:  ";
 	cin >> T1;
-	cout << "Abs. Chamber Pressure; PSI";
+	cout << "Abs. Chamber Pressure [PSI]:  ";
 	cin >> Pc;
 
 	cout << "Input initial oxidizer mass in [kg]:  ";
@@ -84,10 +84,10 @@ int main() {
 
 		time[x] = x*timeStep;
 		thrust[x] = At*(Pc*PSI_TO_PA)*Cf;
-		cout << "T+" << time << " s =>>> Oxy Mass: " <<  oxyMass << "kg | Chamber Pressure: " <<  Pc << " psi" << endl;
-		output(simFile,time, oxyMass, Pc);//output to csv
+		cout << "T+" << time[x] << " s =>>> Oxy Mass: " <<  oxyMass << "kg | Chamber Pressure: " <<  Pc << " psi" << endl;
+		output(simFile,time[x], oxyMass, Pc, thrust[x], mDotInjector);//output to csv
 
-		if (oxyMass <= 0.01) { cout << "Empty"; break; };
+		if (oxyMass <= 0.01) { cout << "Empty"; cin; break; };
 	}
 
 }

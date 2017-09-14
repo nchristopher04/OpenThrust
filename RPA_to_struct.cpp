@@ -5,30 +5,27 @@
 
 using namespace std;
 
-//const int INTEGER_FILE_LENGTH = 110;			// Length of csv table
-const string FILE_PATH = ".\\file.csv";			// File path of csv table 
-const double UNIV_GAS_CONST = 8.314;			// [kJ/kmol*K]
+const int TABLE_LENGTH = 4200;								// Doesn't actually have to be table length, just longer
+const string FILE_PATH = ".\\RPA_Output_Table.csv";			// File path of csv table 
+const double UNIV_GAS_CONST = 8.314;						// [kJ/kmol*K]
 
 Look_Up_Table Create_Table_Array()
 {
 	ifstream file(FILE_PATH);			
-	string row;
+	string row, cell;
 	string delimiter = ",";						// Only works for csv files because they are comma seperated
 	Look_Up_Table Table;
-	Table.RPA_Vector.reserve(4200);
 	RPA_Table single;
-	int k = 0;
 	int startS, endS;
-	string cell;
+	Table.RPA_Vector.reserve(TABLE_LENGTH);		// Reserves spots in look up table
+	int k = 0;
+	double rowArray[15];
 	while (file.good())
 	{
 		getline(file, row);
-		if (k == 0){ k++; continue; }			// skip header
-		if (row.empty()) { continue; }			// skip empty rows
+		if (k == 0){ k++; continue; }			// Skip header
+		if (row.empty()) { continue; }			// Skip empty rows
 		startS = 0;
-
-		double rowArray[15];
-
 		for (int i = 0; i < 15; i++)
 		{
 			endS = row.find(delimiter);
@@ -54,11 +51,8 @@ Look_Up_Table Create_Table_Array()
 		single.c_factor = rowArray[14];						//
 		single.R_value = UNIV_GAS_CONST / single.M_value;	// [kJ/kg*K]
 
-		// Input structures into array and then into another structure
-		// Did this because c++ can't return arrays of structs
-		// k-1 to skip header row
+		// Input structures into vector and then into another structure
 		Table.RPA_Vector.push_back(single);
-		k++;
 	}
 	return Table;
 }

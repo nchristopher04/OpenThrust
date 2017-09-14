@@ -128,7 +128,7 @@
     <Text Include="N20_Neg30_35T.txt" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="file.csv" />
+    <None Include="RPA_Output_Table.csv" />
     <None Include="output.csv" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
