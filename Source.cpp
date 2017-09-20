@@ -162,28 +162,3 @@ void RPALookup(float Pc, double OF, double &k, double &R, double &Tc) {
 	Tc = CombustionProps.Chamber_Temperture;
 }
 
-double tankProps(double oxyMass, double Pc, double &Temp, double &TankPressure) {
-	
-	
-	//TankPressure = nox_vp(Temp);
-	return 0;
-}
-//NOS properties from Modelling the Nitrous Run tank Emptying
-const float pCrit = 72.51f; /* critical pressure, Bar Abs */
-const float rhoCrit = 452.0f; /* critical density, kg/m3 */
-const float ZCrit = 0.28f; /* critical compressibility factor */
-const float gamma = 1.3f; /* average over subcritical range */
-
-/* Nitrous oxide vapour pressure, Bar */
-double nox_vp(double T_Celcius)
-{
-	const float p[4] = { 1.0f, 1.5f, 2.5f, 5.0f };
-	const float b[4] = { -6.71893f, 1.35966f, -1.3779f, -4.051f };
-	double Tr = reduced_temperature(T_Celcius);
-	float rab = 1.0 - Tr;
-	float shona = 0.0;
-	for (int dd = 0; dd < 4; dd++)
-		shona += b[dd] * pow(rab, p[dd]);
-	double bob = pCrit * exp((shona / Tr));
-	return(bob);
-}

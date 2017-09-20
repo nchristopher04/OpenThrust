@@ -11,6 +11,12 @@ const double MM_NOS = 0.044013;							// Molar Mass of Nitrous Oxide [kg/mol]
 const double R_SPEC_NOS = R_CONSTANT / (MM_NOS);		// Specific Gas Constant of Nitrous	Oxide [kJ/(kg*K)]
 
 double volume_tank, mass_combined, temperature_tank;	// Initial conditions
+														//NOS properties from Modelling the Nitrous Run tank Emptying
+const float pCrit = 72.51f; /* critical pressure, Bar Abs */
+const float rhoCrit = 452.0f; /* critical density, kg/m3 */
+const float ZCrit = 0.28f; /* critical compressibility factor */
+const float gamma = 1.3f; /* average over subcritical range */
+
 
 double reduced_temperature(double temperature_tank)
 {
@@ -82,4 +88,18 @@ double total_enthalpy(double specific_enthalpy, double mass)
 	double tot_enth;
 	tot_enth = mass*specific_enthalpy;
 	return tot_enth;
+}
+
+/* Nitrous oxide vapour pressure, Bar */
+double nox_vp(double T_Celcius)
+{
+	const float p[4] = { 1.0f, 1.5f, 2.5f, 5.0f };
+	const float b[4] = { -6.71893f, 1.35966f, -1.3779f, -4.051f };
+	double Tr = reduced_temperature(T_Celcius);
+	float rab = 1.0 - Tr;
+	float shona = 0.0;
+	for (int dd = 0; dd < 4; dd++)
+		shona += b[dd] * pow(rab, p[dd]);
+	double bob = pCrit * exp((shona / Tr));
+	return(bob);
 }
