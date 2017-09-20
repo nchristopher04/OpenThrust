@@ -19,7 +19,7 @@ double R;								// Specific gas constant [kJ/kg*k]
 double Tc;								// Chamber temperature [k]
 double Cf;								// Thrust coefficient []
 double T1;								// NOS Tank Temperature
-int PcRound10;							// Casts chamber pressure to integer
+//int PcRound10;							// Casts chamber pressure to integer
 double err;								// Used for calculating relative error
 struct options {
 	int flowModel;
@@ -63,20 +63,21 @@ int main() {
 	for (int x = 0; x < 1000; x++) { //time steps
 		
 		// Finds all relevant values for thrust
-		RPALookup(Pc, OF, k, R, Tc);
+		interpRPAValues(Pc, OF, k, R, Tc);
 		mDotNozzle = massFlowRate(At, Pc, k, R, Tc);
 		if (MainX.flowModel == 2) {
 			PcOld = Pc;
 			for (int i = 0; i < 100; i++) {
-				PcRound10 = PcOld; //cast chamber pressure to int.
-				PcRound10 += 5;
-				PcRound10 -= PcRound10 % 10;
-				mDotInjector = injectorModel(T1, PcRound10);
+				//PcRound10 = PcOld; //cast chamber pressure to int.
+				//PcRound10 += 5;
+				//PcRound10 -= PcRound10 % 10;
+				interpRPAValues(PcOld, OF, k, R, Tc);
+				mDotInjector = injectorModel(T1, PcOld);
 				mDotNozzle = massFlowRateNozzle(mDotInjector, OF);
 				PcNew = calcPc(At, mDotNozzle, k, R, Tc);
-				err = 100 * (PcOld - PcNew) / PcOld;
+				err = abs(100 * (PcOld - PcNew) / PcOld);
 				PcOld = PcNew;
-				if (err < 5) { Pc = PcNew; break; }
+				if (err < 5) { Pc = PcNew; err = 100; break; }
 				else if (i == 99) { throw "PressureCalculatorDiverged"; }
 			}
 		}
@@ -151,7 +152,7 @@ double thrustCoefficient(double Patm, double A2, double Pc) {
 	return Cf; 
 }
 
-void RPALookup(float Pc, double OF, double &k, double &R, double &Tc) {
+void RPALookup(double Pc, double OF, double &k, double &R, double &Tc) {
 	// Find k, R, Tc from table and return them to the program
 	// Inputs in [psi], []
 	// No output but stores values in variables k, R, Tc
@@ -162,3 +163,64 @@ void RPALookup(float Pc, double OF, double &k, double &R, double &Tc) {
 	Tc = CombustionProps.Chamber_Temperture;
 }
 
+double linInterp(double x1, double y1, double x2, double y2, double x) {
+	double y;
+	// Enter in two coordinates (x1,y1) and (x2,y2)
+	// as well as an x value that should be somewhere
+	// close or in between
+	y = y1 + (x - x1)*(y2 - y1) / (x2 - x1);
+	return y;
+}
+
+double bilinInterp(double x1, double x2, double y1, double y2,
+	double P11, double P12, double P21, double P22,
+	double a, double b) {
+	// Enter in the values of a function f(x,y)
+	// where P1 = f(x1,y1), P2 = f(x1,y2),
+	// P3 = f(x2,y1), P4 = f(x2,y2). Also enter in
+	// an a and b value to interpolate. The a value
+	// should be in between x1 and x2 and the b value
+	// should be in betweeen y1 and y2. Returns the
+	// interpolated value of f(a,b).
+	double H1, H2, H3, H4, H5;
+	double P;
+	H1 = 1 / ((x2 - x1)*(y2 - y1));
+	H2 = P11*(x2 - a)*(y2 - b);
+	H3 = P12*(a - x1)*(y2 - b);
+	H4 = P21*(x2 - a)*(b - y1);
+	H5 = P22*(a - x1)*(b - y1);
+	P = H1*(H2 + H3 + H4 + H5);
+	return P;
+}
+
+void interpRPAValues(double Pc, double OF, double &k, double &R, double &Tc) {
+	double OF1Pc1, OF1Pc2, Of2Pc1, Of2Pc2;	// Used to interpolate RPA values
+	double OF1, OF2, Pc1, Pc2;				// Used to interpolate RPA values
+	double k1, k2, k3, k4;					// Used to interpolate k value
+	double R1, R2, R3, R4;					// Used to interpolate R value
+	double Tc1, Tc2, Tc3, Tc4;				// Used to interpolate Tc value
+	OF1 = floor(OF * 10) / 10;
+	OF2 = ceil(OF * 10) / 10;
+	Pc1 = floor(Pc / 10) * 10;
+	Pc2 = ceil(Pc / 10) * 10;
+	if (Pc1 != Pc2 && OF1 != OF2) {
+		RPALookup(Pc1, OF1, k1, R1, Tc1);
+		RPALookup(Pc1, OF2, k2, R2, Tc2);
+		RPALookup(Pc2, OF1, k3, R3, Tc3);
+		RPALookup(Pc2, OF2, k4, R4, Tc4);
+		k = bilinInterp(Pc1, Pc2, OF1, OF2, k1, k2, k3, k4, Pc, OF);
+		R = bilinInterp(Pc1, Pc2, OF1, OF2, R1, R2, R3, R4, Pc, OF);
+		Tc = bilinInterp(Pc1, Pc2, OF1, OF2, Tc1, Tc2, Tc3, Tc4, Pc, OF);
+	}
+	else if (Pc1 != Pc2) {
+		RPALookup(Pc1, OF, k1, R1, Tc1);
+		RPALookup(Pc2, OF, k2, R2, Tc2);
+	}
+	else if (OF1 != OF2) {
+		RPALookup(Pc, OF1, k3, R3, Tc3);
+		RPALookup(Pc, OF2, k4, R4, Tc4);
+	}
+	else {
+		RPALookup(Pc, OF, k, R, Tc);
+	}
+}
