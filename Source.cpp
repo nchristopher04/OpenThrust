@@ -18,7 +18,7 @@ double k;								// Heat capacity ratio []
 double R;								// Specific gas constant [kJ/kg*k]
 double Tc;								// Chamber temperature [k]
 double Cf;								// Thrust coefficient []
-double T1;								// NOS Tank Temperature
+double Tt;								// NOS Tank Temperature
 //int PcRound10;							// Casts chamber pressure to integer
 double err;								// Used for calculating relative error
 struct options {
@@ -51,7 +51,7 @@ int main() {
 	simFile << "Time (s), Liquid Mass (kg)  ,  Chamber Pressure (PSI), Thrust (N), Mass Flow Rate (kg/s)" << '\n'; //setup basic output format
 	cout << "Input initial params." << endl;
 	cout << "Initial NOS Temperature [Celsius]:  ";
-	cin >> T1;
+	cin >> Tt;
 	cout << "Abs. Chamber Pressure [PSI]:  ";
 	cin >> Pc;
 
@@ -63,35 +63,30 @@ int main() {
 	for (int x = 0; x < 1000; x++) { //time steps
 		
 		// Finds all relevant values for thrust
-		interpRPAValues(Pc, OF, k, R, Tc);
-		mDotNozzle = massFlowRate(At, Pc, k, R, Tc);
 		if (MainX.flowModel == 2) {
 			PcOld = Pc;
 			for (int i = 0; i < 100; i++) {
-				//PcRound10 = PcOld; //cast chamber pressure to int.
-				//PcRound10 += 5;
-				//PcRound10 -= PcRound10 % 10;
 				interpRPAValues(PcOld, OF, k, R, Tc);
-				mDotInjector = injectorModel(T1, PcOld);
+				mDotInjector = interpInjectorModel(Tt, PcOld);
 				mDotNozzle = massFlowRateNozzle(mDotInjector, OF);
 				PcNew = calcPc(At, mDotNozzle, k, R, Tc);
 				err = abs(100 * (PcOld - PcNew) / PcOld);
 				PcOld = PcNew;
-				if (err < 5) { Pc = PcNew; err = 100; break; }
+				if (err < 0.05) { Pc = PcNew; err = 100; break; }
 				else if (i == 99) { throw "PressureCalculatorDiverged"; }
 			}
 		}
-		else mDotInjector = massFlowRateInjector(mDotNozzle, OF);
+		else { 
+			interpRPAValues(Pc, OF, k, R, Tc);
+			mDotNozzle = massFlowRate(At, Pc, k, R, Tc);
+			mDotInjector = massFlowRateInjector(mDotNozzle, OF); 
+		}
 		Cf = thrustCoefficient(14.7, A2, Pc);
 
-		try {
+		try { //catch negative flow exception, display to user and break loop
 			if (mDotNozzle < 0 || mDotInjector < 0) { throw "massFlowNegative"; }
-		}
-		catch (exception& e)
-		{
-			cout << e.what() << '\n'; //catch exception, display to user and break loop
-			break;
-		}
+		}catch (exception& e){cout << e.what() << '\n'; break;} 
+		
 		oxyMass -= mDotInjector*timeStep; 
 
 		// Creates outputs for each timestep
@@ -194,7 +189,6 @@ double bilinInterp(double x1, double x2, double y1, double y2,
 }
 
 void interpRPAValues(double Pc, double OF, double &k, double &R, double &Tc) {
-	double OF1Pc1, OF1Pc2, Of2Pc1, Of2Pc2;	// Used to interpolate RPA values
 	double OF1, OF2, Pc1, Pc2;				// Used to interpolate RPA values
 	double k1, k2, k3, k4;					// Used to interpolate k value
 	double R1, R2, R3, R4;					// Used to interpolate R value
@@ -208,19 +202,57 @@ void interpRPAValues(double Pc, double OF, double &k, double &R, double &Tc) {
 		RPALookup(Pc1, OF2, k2, R2, Tc2);
 		RPALookup(Pc2, OF1, k3, R3, Tc3);
 		RPALookup(Pc2, OF2, k4, R4, Tc4);
-		k = bilinInterp(Pc1, Pc2, OF1, OF2, k1, k2, k3, k4, Pc, OF);
-		R = bilinInterp(Pc1, Pc2, OF1, OF2, R1, R2, R3, R4, Pc, OF);
+		k  = bilinInterp(Pc1, Pc2, OF1, OF2, k1, k2, k3, k4, Pc, OF);
+		R  = bilinInterp(Pc1, Pc2, OF1, OF2, R1, R2, R3, R4, Pc, OF);
 		Tc = bilinInterp(Pc1, Pc2, OF1, OF2, Tc1, Tc2, Tc3, Tc4, Pc, OF);
 	}
 	else if (Pc1 != Pc2) {
 		RPALookup(Pc1, OF, k1, R1, Tc1);
 		RPALookup(Pc2, OF, k2, R2, Tc2);
+		k  = linInterp(Pc1, k1, Pc2, k2, Pc);
+		R  = linInterp(Pc1, R1, Pc2, R2, Pc);
+		Tc = linInterp(Pc1, Tc1, Pc2, Tc2, Pc);
 	}
 	else if (OF1 != OF2) {
 		RPALookup(Pc, OF1, k3, R3, Tc3);
 		RPALookup(Pc, OF2, k4, R4, Tc4);
+		k = linInterp(OF1, k1, OF2, k2, OF);
+		R = linInterp(OF1, R1, OF2, R2, OF);
+		Tc = linInterp(OF1, Tc1, OF2, Tc2, OF);
 	}
 	else {
 		RPALookup(Pc, OF, k, R, Tc);
 	}
+}
+
+double interpInjectorModel(double Tt, double Pc) {
+	double Tt1, Tt2, Pc1, Pc2;				// Used to interpolate RPA values
+	double mDot1, mDot2, mDot3, mDot4;
+	double mDotInjector;
+	Tt1 = floor(Tt);
+	Tt2 = ceil(Tt);
+	Pc1 = floor(Pc / 10) * 10;
+	Pc2 = ceil(Pc / 10) * 10;
+	if (Pc1 != Pc2 && Tt1 != Tt2) {
+		mDot1 = injectorModel(Tt1, Pc1);
+		mDot2 = injectorModel(Tt1, Pc2);
+		mDot3 = injectorModel(Tt2, Pc1);
+		mDot4 = injectorModel(Tt2, Pc2);
+		mDotInjector = bilinInterp(Tt1, Tt2, Pc1, Pc2, mDot1, mDot2, mDot3, mDot4, Tt, Pc);
+	}
+	else if (Tt1 != Tt2) {
+		mDot1 = injectorModel(Tt1, Pc);
+		mDot2 = injectorModel(Tt2, Pc);
+		mDotInjector = linInterp(Tt1, mDot1, Tt2, mDot2, Tt);
+	}
+	else if (Pc1 != Pc2) {
+		mDot1 = injectorModel(Tt, Pc1);
+		mDot2 = injectorModel(Tt, Pc2);
+		mDotInjector = linInterp(Pc1, mDot1, Pc2, mDot2, Pc);
+	}
+	else {
+		mDotInjector = injectorModel(Tt, Pc);
+	}
+
+	return mDotInjector;
 }
