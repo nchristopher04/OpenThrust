@@ -111,6 +111,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="blowdownModel.cpp" />
     <ClCompile Include="injector_Model.cpp" />
     <ClCompile Include="Nozzle_flow.cpp" />
     <ClCompile Include="RPA_to_struct.cpp" />
@@ -118,6 +119,7 @@
     <ClCompile Include="thermo_functions.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="blowdownModel.h" />
     <ClInclude Include="Source.h" />
     <ClInclude Include="injector_Model.h" />
     <ClInclude Include="RPA_to_struct.h" />

@@ -3,8 +3,8 @@
 #include "thermo_functions.h"
 
 const double CELS_TO_KELVIN = 273.15;					// Conversion factor from [C] to [K]
-
-const double CRIT_TEMP_NOS = 36.4;						// Critical Temperature of NOS [C]
+const double KPa_TO_BAR = 100;							//conversion from [kPa] to [bar]
+const double CRIT_TEMP_NOS = 309.55;						// Critical Temperature of NOS [K]
 const double CRIT_PRES_NOS = 7255;						// Critical Pressure of NOS [kPa]
 const double R_CONSTANT = 0.008314;						// Universal Gas Constant [kJ/(mol*K)]
 const double MM_NOS = 0.044013;							// Molar Mass of Nitrous Oxide [kg/mol]
@@ -12,17 +12,16 @@ const double R_SPEC_NOS = R_CONSTANT / (MM_NOS);		// Specific Gas Constant of Ni
 
 double volume_tank, mass_combined, temperature_tank;	// Initial conditions
 														//NOS properties from Modelling the Nitrous Run tank Emptying
-const float pCrit = 72.51f; /* critical pressure, Bar Abs */
 const float rhoCrit = 452.0f; /* critical density, kg/m3 */
 const float ZCrit = 0.28f; /* critical compressibility factor */
 const float gamma = 1.3f; /* average over subcritical range */
 
 
-double reduced_temperature(double temperature_tank)
+double reduced_temperature(double Temp_Kelvin)
 {
 	// Returns reduced temperature of NOS
 	// Input should be in Celsius
-	double Tr = (temperature_tank + CELS_TO_KELVIN) / (CRIT_TEMP_NOS + CELS_TO_KELVIN);
+	double Tr = (Temp_Kelvin) / (CRIT_TEMP_NOS);
 	return Tr;
 }
 
@@ -90,16 +89,35 @@ double total_enthalpy(double specific_enthalpy, double mass)
 	return tot_enth;
 }
 
-/* Nitrous oxide vapour pressure, Bar */
-double nox_vp(double T_Celcius)
+/* Nitrous oxide vapour pressure, kPa */
+double nox_vp(double T_Kelvin)
 {
 	const float p[4] = { 1.0f, 1.5f, 2.5f, 5.0f };
 	const float b[4] = { -6.71893f, 1.35966f, -1.3779f, -4.051f };
-	double Tr = reduced_temperature(T_Celcius);
+	double Tr = reduced_temperature(T_Kelvin);
 	float rab = 1.0 - Tr;
 	float shona = 0.0;
 	for (int dd = 0; dd < 4; dd++)
 		shona += b[dd] * pow(rab, p[dd]);
-	double bob = pCrit * exp((shona / Tr));
-	return(bob);
+	double  Pvap= (CRIT_PRES_NOS/KPa_TO_BAR) * exp((shona / Tr));
+	return(Pvap*KPa_TO_BAR); //should work without the conversions but I'm not sure so I'll leave converting through to bar
+}
+/* Nitrous liquid Enthalpy (Latent heat) of vaporisation, J/kg */
+double nox_enthV(double T_Kelvin)
+{
+	const float bL[5] = { -200.0f, 116.043f, -917.225f, 794.779f, -589.587f };
+	const float bV[5] = { -200.0f, 440.055f, -459.701f, 434.081f, -485.338f };
+	double shonaL, shonaV;
+	double Tr = reduced_temperature(T_Kelvin);
+		float rab;
+	rab = 1.0 - Tr;
+	shonaL = bL[0];
+	shonaV = bV[0];
+	for (int dd = 1; dd < 5; dd++)
+	{
+		shonaL += bL[dd] * pow(rab, (dd / 3.0)); /* saturated liquid enthalpy */
+		shonaV += bV[dd] * pow(rab, (dd / 3.0)); /* saturated vapour enthalpy */
+	}
+double Hvap = (shonaV - shonaL) * 1000.0; /* net during change from liquid to vapour */
+	return(Hvap);
 }

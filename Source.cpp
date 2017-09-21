@@ -21,8 +21,9 @@ double Cf;								// Thrust coefficient []
 double T1;								// NOS Tank Temperature
 int PcRound10;							// Casts chamber pressure to integer
 double err;								// Used for calculating relative error
-struct options {
+struct options {                        //define all model options here
 	int flowModel;
+	int integrationType;
 }MainX;
 
 // Already defined
@@ -31,6 +32,7 @@ double A2 = 0.00181001;					// Nozzle exit area [m^2]
 double OF = 2.1;						// Oxidizer-fuel ratio assumed constant to start
 double timeStep = 0.1;					// [s]
 double mDotNozzle, mDotInjector;		// Mass flow rates at the nozzle and the injector [kg/s]
+double mDotInjector_old;					//Prev iteration mass flow rate
 double time[1000], thrust[1000];		// Output arrays that give thrust over time
 Look_Up_Table Table_Array = Create_Table_Array();
 
@@ -91,8 +93,11 @@ int main() {
 			cout << e.what() << '\n'; //catch exception, display to user and break loop
 			break;
 		}
-		oxyMass -= mDotInjector*timeStep; 
-
+		if (MainX.integrationType == 1) { oxyMass -= mDotInjector*timeStep; }
+		else if (MainX.integrationType == 2) {
+			oxyMass -= 0.5 * timeStep * (3.0 * mDotInjector - mDotInjector_old);//addams integration
+		}
+		mDotInjector_old = mDotInjector;
 		// Creates outputs for each timestep
 
 		time[x] = x*timeStep;
