@@ -6,6 +6,7 @@
 #include <stdexcept>
 #include "injector_Model.h"
 #include "Source.h"
+#include "blowdownModel.h"
 
 using namespace std;
 
@@ -27,12 +28,11 @@ struct options {                        //define all model options here
 }MainX;
 
 // Already defined
-double At = 0.000382646;				// Nozzle throat area [m^2]
-double A2 = 0.00181001;					// Nozzle exit area [m^2]
+const double At = 0.000382646;			// Nozzle throat area [m^2]
+const double A2 = 0.00181001;			// Nozzle exit area [m^2]
 double OF = 2.1;						// Oxidizer-fuel ratio assumed constant to start
-double timeStep = 0.1;					// [s]
 double mDotNozzle, mDotInjector;		// Mass flow rates at the nozzle and the injector [kg/s]
-double mDotInjector_old;					//Prev iteration mass flow rate
+double mDotInjector_old;				//Prev iteration mass flow rate
 double time[1000], thrust[1000];		// Output arrays that give thrust over time
 Look_Up_Table Table_Array = Create_Table_Array();
 
@@ -49,6 +49,7 @@ void output(ofstream& out, Arg&& arg, Args&&... args)
 } //this is a variadic print function to output.csv
 
 int main() {
+	double liquidMass, vaporizedMass;
 	ofstream simFile("output.csv");
 	simFile << "Time (s), Liquid Mass (kg)  ,  Chamber Pressure (PSI), Thrust (N), Mass Flow Rate (kg/s)" << '\n'; //setup basic output format
 	cout << "Input initial params." << endl;
@@ -61,7 +62,7 @@ int main() {
 	cin >> oxyMass;
 
 	 MainX.flowModel = 2;
-	
+
 	for (int x = 0; x < 1000; x++) { //time steps
 		
 		// Finds all relevant values for thrust
@@ -93,11 +94,16 @@ int main() {
 			cout << e.what() << '\n'; //catch exception, display to user and break loop
 			break;
 		}
-		if (MainX.integrationType == 1) { oxyMass -= mDotInjector*timeStep; }
+		if (MainX.integrationType == 1) { 
+			oxyMass -= mDotInjector*timeStep;
+			liquidMass = oxyMass; //assumes only liquid flow through injector
+		}
 		else if (MainX.integrationType == 2) {
 			oxyMass -= 0.5 * timeStep * (3.0 * mDotInjector - mDotInjector_old);//addams integration
+			liquidMass = oxyMass;
 		}
 		mDotInjector_old = mDotInjector;
+		tankProps(oxyMass,vaporizedMass,liquidMass,T1,tankPressure); //update new Temperature and tank pressure
 		// Creates outputs for each timestep
 
 		time[x] = x*timeStep;

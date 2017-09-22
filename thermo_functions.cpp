@@ -121,3 +121,39 @@ double nox_enthV(double T_Kelvin)
 double Hvap = (shonaV - shonaL) * 1000.0; /* net during change from liquid to vapour */
 	return(Hvap);
 }
+
+double nox_Lrho(double T_Kelvin)
+{
+	const float b[4] = { 1.72328f, -0.8395f, 0.5106f, -0.10412f };
+	double Tr = reduced_temperature(T_Kelvin);
+	double rab = (1.0 / Tr) - 1.0;
+	double shona = 0.0;
+	for (int i = 0; i < 5; i++)
+		shona += b[i] * pow(rab, ((i + 1) / 3.0));
+	double rho = rhoCrit * exp(shona);
+	return(rho);
+}
+/* Nitrous oxide saturated vapour density, kg/m3 */
+double nox_Vrho(double T_Kelvin)
+{
+	const float b[5] = { -1.009f, -6.28792f, 7.50332f, -7.90463f, 0.629427f };
+	double Tr = reduced_temperature(T_Kelvin);
+	double rab = (1.0 / Tr) - 1.0;
+	double shona = 0.0;
+	for (int i = 0; i < 5; i++)
+		shona += b[i] * pow(rab, ((i + 1) / 3.0));
+	double rho = rhoCrit * exp(shona);
+	return(rho);
+}
+
+double nox_Cp(double T_Kelvin)
+{
+	const float b[5] = { 2.49973f, 0.023454f, -3.80136f, 13.0945f, -14.518f };
+	double Tr = reduced_temperature(T_Kelvin);
+	double rab = 1.0 - Tr;
+	double shona = 1.0 + b[1] / rab;
+	for (int i = 1; i < 4; i++)
+		shona += b[(i + 1)] * pow(rab, i);
+	double heatCapacity = b[0] * shona * 1000.0; /* convert from KJ to J */
+	return(heatCapacity);
+}

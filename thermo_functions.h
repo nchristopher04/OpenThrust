@@ -8,6 +8,9 @@ double fluid_quality(double, double, double);
 double specific_enthalpy_combined(double, double, double);
 double specific_entropy_combined(double, double, double);
 double total_enthalpy(double, double);
-
-
+double nox_enthV(double T_Kelvin);
+double nox_vp(double T_Kelvin);
+double nox_Lrho(double T_Kelvin);
+double nox_Vrho(double T_Kelvin);
+double nox_Cp(double T_Kelvin);
 #endif

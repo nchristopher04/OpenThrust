@@ -7,7 +7,8 @@ double massFlowRateInjector(double mDotNoz, double OF_ratio);
 double massFlowRateNozzle(double mDotI, double OF_ratio);
 double thrustCoefficient(double Patm, double A2, double Pc);
 void RPALookup(float Pc, double OF, double &k, double &R, double &Tc);
-double tankProps(double oxyMass, double Pc, double &Temp, double &TankPressure);
 double nox_vp(double T_Celcius);
 
+double tankVolume, tankPressure; //these need to be accessible by blowdownModel and Source
+const float timeStep = 0.1;				// [s]
 #endif // ! SOURCE_H
