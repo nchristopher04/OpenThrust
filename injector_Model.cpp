@@ -57,9 +57,7 @@ double injectorModel(double T1, double P2F)
 	//ifstream Tfile("CO2_Temp.txt");
 
 	data_gather(Pfile, constP, headP);
-	cout << endl;
 	data_gather(Tfile, constT, headT);
-	cout << endl;
 	//****Parameters*********
 	double Pvap = data_grab("Pressure (psia)", T1, "T", constT, headT);//psi,absolute pre-injector pressure
 	double P1 = Pvap;
