@@ -6,3 +6,5 @@
 /Debug/
 /x64/
 output.csv
+*.suo
+*.user
