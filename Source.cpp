@@ -20,8 +20,10 @@ double R;								// Specific gas constant [kJ/kg*k]
 double Tc;								// Chamber temperature [k]
 double Cf;								// Thrust coefficient []
 double Tt;								// NOS Tank Temperature
-//int PcRound10;							// Casts chamber pressure to integer
+//int PcRound10;						// Casts chamber pressure to integer
 double err;								// Used for calculating relative error
+double tankVolume, tankPressure;		//Total tank volume [m^3], tank absolute pressure [kPa]
+const double timeStep = 0.1;			// [s]
 struct options {                        //define all model options here
 	int flowModel;
 	int integrationType;
@@ -103,7 +105,7 @@ int main() {
 			liquidMass = oxyMass;
 		}
 		mDotInjector_old = mDotInjector;
-		tankProps(oxyMass,vaporizedMass,liquidMass,T1,tankPressure); //update new Temperature and tank pressure
+		tankProps(timeStep,tankVolume,oxyMass,vaporizedMass,liquidMass,Tt,tankPressure); //update new Temperature and tank pressure
 		// Creates outputs for each timestep
 
 		time[x] = x*timeStep;
