@@ -2,6 +2,7 @@
 #include "blowdownModel.h"
 #include "thermo_functions.h"
 #include "Source.h"
+using namespace std;
 
 struct Faults {
 	char tempFault;
