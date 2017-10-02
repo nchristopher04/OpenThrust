@@ -105,6 +105,13 @@ double nox_vp(double T_Kelvin)
 /* Nitrous liquid Enthalpy (Latent heat) of vaporisation, J/kg */
 double nox_enthV(double T_Kelvin)
 {
+	double Hvap = 0;
+	
+	double hl = data_grab("Enthalpy (l, kJ/kg)", P2, "P", constP, headP);//liquid enthalpy at 2
+	double hg = data_grab("Enthalpy (v, kJ/kg)", P2, "P", constP, headP);//gas enthalpy at 2
+	
+	Hvap = (hg - hl) * 1000;
+	/*
 	const float bL[5] = { -200.0f, 116.043f, -917.225f, 794.779f, -589.587f };
 	const float bV[5] = { -200.0f, 440.055f, -459.701f, 434.081f, -485.338f };
 	double shonaL, shonaV;
@@ -115,10 +122,10 @@ double nox_enthV(double T_Kelvin)
 	shonaV = bV[0];
 	for (int dd = 1; dd < 5; dd++)
 	{
-		shonaL += bL[dd] * pow(rab, (dd / 3.0)); /* saturated liquid enthalpy */
-		shonaV += bV[dd] * pow(rab, (dd / 3.0)); /* saturated vapour enthalpy */
+		shonaL += bL[dd] * pow(rab, (dd / 3.0));  saturated liquid enthalpy 
+		shonaV += bV[dd] * pow(rab, (dd / 3.0));  saturated vapour enthalpy 
 	}
-double Hvap = (shonaV - shonaL) * 1000.0; /* net during change from liquid to vapour */
+double Hvap = (shonaV - shonaL) * 1000.0;  net during change from liquid to vapour */
 	return(Hvap);
 }
 
