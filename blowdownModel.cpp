@@ -2,6 +2,7 @@
 #include "blowdownModel.h"
 #include "thermo_functions.h"
 #include "Source.h"
+#include <iostream>
 
 struct Faults {
 	char tempFault;
@@ -16,11 +17,14 @@ void tankProps(double timeStep, double tankVolume, double oxyMass, double &vapor
 	T_Kelvin -= (deltaQ / (oxyMass * nox_Cp(T_Kelvin)));  // define a heat capacity for the whole system
 	if (T_Kelvin < (183))
 	{
+		std::cout << "TempFault L :" << T_Kelvin;
 		T_Kelvin = (183); // lower limit -90C
 		blowdownModel.tempFault = 'L';
+		
 	}
 	else if (T_Kelvin > 309.15) //upper limit 36C
 	{
+		std::cout << "TempFault H :" << T_Kelvin;
 		T_Kelvin = 309.15;
 		blowdownModel.tempFault = 'H';
 	}

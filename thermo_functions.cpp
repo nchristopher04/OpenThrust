@@ -11,11 +11,6 @@ const double MM_NOS = 0.044013;							// Molar Mass of Nitrous Oxide [kg/mol]
 const double R_SPEC_NOS = R_CONSTANT / (MM_NOS);		// Specific Gas Constant of Nitrous	Oxide [kJ/(kg*K)]
 
 double volume_tank, mass_combined, temperature_tank;	// Initial conditions
-														//NOS properties from Modelling the Nitrous Run tank Emptying
-const float rhoCrit = 452.0f; /* critical density, kg/m3 */
-const float ZCrit = 0.28f; /* critical compressibility factor */
-const float gamma = 1.3f; /* average over subcritical range */
-
 
 double reduced_temperature(double Temp_Kelvin)
 {
