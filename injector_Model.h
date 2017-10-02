@@ -2,5 +2,6 @@
 #define INJECTORMODEL_H
 
 double injectorModel(double T1, double P2F);
+double data_grab(string property, double value, string TorP, double(&a)[30][100], string(&header)[30]);
 
 #endif

@@ -1,6 +1,11 @@
 #include <iostream>
 #include <cmath>
+#include <fstream>
 #include "thermo_functions.h"
+#include "injector_Model.h"
+#include <sstream>
+#include <string>
+using namespace std;
 
 const double CELS_TO_KELVIN = 273.15;					// Conversion factor from [C] to [K]
 const double KPa_TO_BAR = 100;							//conversion from [kPa] to [bar]
@@ -11,6 +16,14 @@ const double MM_NOS = 0.044013;							// Molar Mass of Nitrous Oxide [kg/mol]
 const double R_SPEC_NOS = R_CONSTANT / (MM_NOS);		// Specific Gas Constant of Nitrous	Oxide [kJ/(kg*K)]
 
 double volume_tank, mass_combined, temperature_tank;	// Initial conditions
+
+ifstream Pfile("N20_100_1000PSI.txt");
+ifstream Tfile("N20_Neg30_35T.txt");
+
+double constT[30][100], constP[30][100];
+string headT[30], headP[30];
+
+
 
 double reduced_temperature(double Temp_Kelvin)
 {
@@ -87,15 +100,18 @@ double total_enthalpy(double specific_enthalpy, double mass)
 /* Nitrous oxide vapour pressure, kPa */
 double nox_vp(double T_Kelvin)
 {
-	const float p[4] = { 1.0f, 1.5f, 2.5f, 5.0f };
+	double pVap= data_grab("Pressure (psia)", T_Kelvin, "T", constT, headT);
+	
+	/*const float p[4] = { 1.0f, 1.5f, 2.5f, 5.0f };
 	const float b[4] = { -6.71893f, 1.35966f, -1.3779f, -4.051f };
 	double Tr = reduced_temperature(T_Kelvin);
-	double rab = 1.0 - Tr;
-	double shona = 0.0;
+	float rab = 1.0 - Tr;
+	float shona = 0.0;
 	for (int dd = 0; dd < 4; dd++)
 		shona += b[dd] * pow(rab, p[dd]);
 	double  Pvap= (CRIT_PRES_NOS/KPa_TO_BAR) * exp((shona / Tr));
-	return(Pvap*KPa_TO_BAR); //should work without the conversions but I'm not sure so I'll leave converting through to bar
+	return(Pvap*KPa_TO_BAR); //should work without the conversions but I'm not sure so I'll leave converting through to bar*/
+	return(pVap);
 }
 /* Nitrous liquid Enthalpy (Latent heat) of vaporisation, J/kg */
 double nox_enthV(double T_Kelvin)
@@ -126,36 +142,40 @@ double Hvap = (shonaV - shonaL) * 1000.0;  net during change from liquid to vapo
 
 double nox_Lrho(double T_Kelvin)
 {
-	const float b[4] = { 1.72328f, -0.8395f, 0.5106f, -0.10412f };
+	double rho = data_grab("Density (l, kg/m3)", T_Kelvin, "T", constT, headT);//NIST liquid density
+	/*const float b[4] = { 1.72328f, -0.8395f, 0.5106f, -0.10412f };
 	double Tr = reduced_temperature(T_Kelvin);
 	double rab = (1.0 / Tr) - 1.0;
 	double shona = 0.0;
 	for (int i = 0; i < 5; i++)
 		shona += b[i] * pow(rab, ((i + 1) / 3.0));
-	double rho = rhoCrit * exp(shona);
+	double rho = rhoCrit * exp(shona);*/
 	return(rho);
 }
 /* Nitrous oxide saturated vapour density, kg/m3 */
 double nox_Vrho(double T_Kelvin)
 {
-	const float b[5] = { -1.009f, -6.28792f, 7.50332f, -7.90463f, 0.629427f };
+	double rho=data_grab("Density (v, kg/m3)", T_Kelvin, "T", constT, headT);//NIST VAPOR density
+	/*const float b[5] = { -1.009f, -6.28792f, 7.50332f, -7.90463f, 0.629427f };
 	double Tr = reduced_temperature(T_Kelvin);
 	double rab = (1.0 / Tr) - 1.0;
 	double shona = 0.0;
 	for (int i = 0; i < 5; i++)
 		shona += b[i] * pow(rab, ((i + 1) / 3.0));
-	double rho = rhoCrit * exp(shona);
+	double rho = rhoCrit * exp(shona);*/
 	return(rho);
 }
 
 double nox_Cp(double T_Kelvin)
 {
+	double Cp = data_grab("Cp (l, J/gK)", T_Kelvin, "T", constT, headT);
+	/*
 	const float b[5] = { 2.49973f, 0.023454f, -3.80136f, 13.0945f, -14.518f };
 	double Tr = reduced_temperature(T_Kelvin);
 	double rab = 1.0 - Tr;
 	double shona = 1.0 + b[1] / rab;
 	for (int i = 1; i < 4; i++)
 		shona += b[(i + 1)] * pow(rab, i);
-	double heatCapacity = b[0] * shona * 1000.0; /* convert from KJ to J */
-	return(heatCapacity);
+	double heatCapacity = b[0] * shona * 1000.0; convert from KJ to J */
+	return(Cp);
 }
