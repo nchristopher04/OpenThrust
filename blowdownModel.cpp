@@ -10,7 +10,8 @@ struct Faults {
 }blowdownModel;
 
 void tankProps(double oxyMass, double &vaporizedMass_prev,double &liquidMass_prev, double &T_Kelvin, double &TankPressure) {
-	double liquidMass, vaporMass, deltaQ,vaporizedMass;
+	double liquidMass = 0.0;
+	double vaporMass, deltaQ, vaporizedMass;
 	
 	deltaQ = vaporizedMass_prev*nox_enthV(T_Kelvin);
 	T_Kelvin-=(deltaQ / (liquidMass * nox_Cp(T_Kelvin)));  // can we define a heat capacity for the whole system?
@@ -34,7 +35,8 @@ void tankProps(double oxyMass, double &vaporizedMass_prev,double &liquidMass_pre
 	if (vaporizedMass < 0) {
 		blowdownModel.vaportFault = true;
 	}
-	double lagged = (timeStep / 0.15) * (vaporizedMass - lagged) + lagged; // 1st-order lag
+	double lagged=0;
+	lagged= (timeStep / 0.15) * (vaporizedMass - lagged) + lagged; // 1st-order lag
 	vaporizedMass_prev = lagged; //to be used in next iteration
 	liquidMass_prev = liquidMass; //set liquidmass_old for next iteration to current, get pushed outside of this function to main iterator
 	return;

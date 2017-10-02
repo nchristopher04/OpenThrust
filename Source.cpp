@@ -103,7 +103,7 @@ int main() {
 			liquidMass = oxyMass;
 		}
 		mDotInjector_old = mDotInjector;
-		tankProps(oxyMass,vaporizedMass,liquidMass,T1,tankPressure); //update new Temperature and tank pressure
+		tankProps(oxyMass,vaporizedMass,liquidMass,Tt,tankPressure); //update new Temperature and tank pressure
 		// Creates outputs for each timestep
 
 		time[x] = x*timeStep;
