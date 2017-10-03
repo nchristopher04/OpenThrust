@@ -6,7 +6,7 @@
 using namespace std;
 
 const int TABLE_LENGTH = 21000;								// Doesn't actually have to be table length, just longer
-const string FILE_PATH = ".\\RPA_Output_Table.csv";			// File path of csv table 
+const string FILE_PATH = "RPA_Output_Table.csv";			// File path of csv table 
 const double UNIV_GAS_CONST = 8.314;						// [kJ/kmol*K]
 
 Look_Up_Table Create_Table_Array()
