@@ -169,7 +169,8 @@ void RPALookup(double OF, double Pc, double &k, double &R, double &Tc) {
 	// Inputs in [psi], []
 	// No output but stores values in variables k, R, Tc
 	// Stored in [], [kJ/kg*K], [k]
-	RPA_Table CombustionProps = lookUp(Pc, OF, Table_Array);
+	RPA_Table CombustionProps;
+	CombustionProps= lookUp(Pc, OF, Table_Array);
 	k = CombustionProps.k_value;
 	R = CombustionProps.R_value;
 	Tc = CombustionProps.Chamber_Temperture;
