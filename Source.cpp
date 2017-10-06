@@ -78,7 +78,7 @@ int main() {
 				err = abs(100 * (PcOld - PcNew) / PcOld);
 				PcOld = PcNew;
 				if (err < 0.05) { Pc = PcNew; err = 100; break; }
-				else if (i == 99) { throw "PressureCalculatorDiverged"; }
+				else if (i == 99) { throw runtime_error("PressureCalculatorDiverged"); }
 			}
 		}
 		else { 
@@ -89,9 +89,9 @@ int main() {
 		Cf = thrustCoefficient(14.7, A2, Pc);
 
 		try { //catch negative flow exception, display to user and break loop
-			if (mDotNozzle < 0 || mDotInjector < 0) { throw "massFlowNegative"; }
+			if (mDotNozzle < 0 || mDotInjector < 0) { throw runtime_error("massFlowNegative"); }
 		}
-		catch (exception& e)
+		catch (runtime_error& e)
 		{
 			cout << e.what() << '\n'; //catch exception, display to user and break loop
 			break;
