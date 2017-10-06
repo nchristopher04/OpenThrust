@@ -2,11 +2,12 @@
 #include <string>
 #include <fstream>
 #include "RPA_to_struct.h"
+#include <stdexcept>
 
 using namespace std;
 
 const int TABLE_LENGTH = 21000;								// Doesn't actually have to be table length, just longer
-const string FILE_PATH = ".\\RPA_Output_Table.csv";			// File path of csv table 
+const string FILE_PATH = "RPA_Output_Table.csv";			// File path of csv table 
 const double UNIV_GAS_CONST = 8.314;						// [kJ/kmol*K]
 
 Look_Up_Table Create_Table_Array()
@@ -62,14 +63,28 @@ RPA_Table lookUp(double Chamber_Pressure, double OF_Ratio, Look_Up_Table Table)
 	// Rounds chamber pressure and OF ratio to grab closest value from table
 	Chamber_Pressure = round(Chamber_Pressure);
 	OF_Ratio = round(OF_Ratio * 10) / 10;
-	for (int i = 0; i < Table.RPA_Vector.size(); i++) 
-	{
-		if (Table.RPA_Vector[i].OF_Ratio == OF_Ratio)
+
+	try {
+		for (int i = 0; i < (Table.RPA_Vector.size()); i++)
 		{
-			if (Table.RPA_Vector[i].Chamber_Pressure == Chamber_Pressure)
+			if (Table.RPA_Vector[i].OF_Ratio == OF_Ratio)
 			{
-				return Table.RPA_Vector[i];
+				if (Table.RPA_Vector[i].Chamber_Pressure == Chamber_Pressure)
+				{
+					return Table.RPA_Vector[i];
+					cout << "lookup succeeded";
+				}
+			}
+			if (i == (Table.RPA_Vector.size() - 1)) {
+				throw runtime_error("Lookup Failed");
 			}
 		}
 	}
-}
+		catch (runtime_error& e){
+				cout << e.what() << '\n'; //catch exception, display to user and break loop
+				system("PAUSE");
+			}
+	}
+		
+
+

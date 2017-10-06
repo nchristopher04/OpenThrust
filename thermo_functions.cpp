@@ -118,8 +118,8 @@ double nox_enthV(double T_Kelvin)
 {
 	double Hvap = 0;
 	
-	double hl = data_grab("Enthalpy (l, kJ/kg)", P2, "P", constP, headP);//liquid enthalpy at 2
-	double hg = data_grab("Enthalpy (v, kJ/kg)", P2, "P", constP, headP);//gas enthalpy at 2
+	double hl = data_grab("Enthalpy (l, kJ/kg)", T_Kelvin, "T", constT, headT);//liquid enthalpy at 2
+	double hg = data_grab("Enthalpy (v, kJ/kg)",T_Kelvin, "T", constT, headT);//gas enthalpy at 2
 	
 	Hvap = (hg - hl) * 1000;
 	/*
