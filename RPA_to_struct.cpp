@@ -35,8 +35,8 @@ Look_Up_Table Create_Table_Array()
 			rowArray[i] = stod(cell);
 		}
 		// Input array into structure
-		single.OF_Ratio = rowArray[0];						// Oxidizer/Fuel ratio
-		single.Chamber_Pressure = rowArray[1];				// Pressure of the chamber [psi]
+		single.OF_Ratio = rowArray[0];		// Oxidizer/Fuel ratio, rounded
+		single.Chamber_Pressure = rowArray[1];		// Pressure of the chamber [psi] rounded
 		single.Nozzle_inlet = rowArray[2];					// 
 		single.Nozzle_exit = rowArray[3];					//
 		single.rho = rowArray[4];							// [kg/m^3] Currently has no values
@@ -58,16 +58,23 @@ Look_Up_Table Create_Table_Array()
 	return Table;
 }
 
-RPA_Table lookUp(double Chamber_Pressure, double OF_Ratio, Look_Up_Table Table)
+RPA_Table lookUp(double Chamber_Pressure, double OF, Look_Up_Table Table)
 {
+	try {
+	if (3.0 <= OF || OF < 0.1) { throw invalid_argument("Invalid OF at lookup (0.1-3.0)"); }
+	else if (Chamber_Pressure < 10.0 || 700 < Chamber_Pressure) { throw invalid_argument("Chamber Pressure out of range (10-700PSI)"); }
+}
+	catch (invalid_argument& e) {
+		cout << e.what() << " at lookup" << endl;
+	}
 	// Rounds chamber pressure and OF ratio to grab closest value from table
 	Chamber_Pressure = round(Chamber_Pressure);
-	OF_Ratio = round(OF_Ratio * 10) / 10;
+	OF = round(OF * 10.0) / 10.0;
 
 	try {
 		for (int i = 0; i < (Table.RPA_Vector.size()); i++)
 		{
-			if (Table.RPA_Vector[i].OF_Ratio == OF_Ratio)
+			if (Table.RPA_Vector[i].OF_Ratio == OF)
 			{
 				if (Table.RPA_Vector[i].Chamber_Pressure == Chamber_Pressure)
 				{

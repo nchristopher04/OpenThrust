@@ -23,8 +23,6 @@ ifstream Tfile("N20_Neg30_35T.txt");
 double constT[30][100], constP[30][100];
 string headT[30], headP[30];
 
-
-
 double reduced_temperature(double Temp_Kelvin)
 {
 	// Returns reduced temperature of NOS
@@ -100,6 +98,8 @@ double total_enthalpy(double specific_enthalpy, double mass)
 /* Nitrous oxide vapour pressure, kPa */
 double nox_vp(double T_Kelvin)
 {
+	data_gather(Pfile, constP, headP);
+	data_gather(Tfile, constT, headT);
 	double pVap= data_grab("Pressure (psia)", T_Kelvin, "T", constT, headT);
 	
 	/*const float p[4] = { 1.0f, 1.5f, 2.5f, 5.0f };
@@ -116,8 +116,9 @@ double nox_vp(double T_Kelvin)
 /* Nitrous liquid Enthalpy (Latent heat) of vaporisation, J/kg */
 double nox_enthV(double T_Kelvin)
 {
+	data_gather(Pfile, constP, headP);
+	data_gather(Tfile, constT, headT);
 	double Hvap = 0;
-	
 	double hl = data_grab("Enthalpy (l, kJ/kg)", T_Kelvin, "T", constT, headT);//liquid enthalpy at 2
 	double hg = data_grab("Enthalpy (v, kJ/kg)",T_Kelvin, "T", constT, headT);//gas enthalpy at 2
 	
@@ -142,6 +143,9 @@ double Hvap = (shonaV - shonaL) * 1000.0;  net during change from liquid to vapo
 
 double nox_Lrho(double T_Kelvin)
 {
+	data_gather(Pfile, constP, headP);
+	data_gather(Tfile, constT, headT);
+
 	double rho = data_grab("Density (l, kg/m3)", T_Kelvin, "T", constT, headT);//NIST liquid density
 	/*const float b[4] = { 1.72328f, -0.8395f, 0.5106f, -0.10412f };
 	double Tr = reduced_temperature(T_Kelvin);
@@ -155,6 +159,8 @@ double nox_Lrho(double T_Kelvin)
 /* Nitrous oxide saturated vapour density, kg/m3 */
 double nox_Vrho(double T_Kelvin)
 {
+	data_gather(Pfile, constP, headP);
+	data_gather(Tfile, constT, headT);
 	double rho=data_grab("Density (v, kg/m3)", T_Kelvin, "T", constT, headT);//NIST VAPOR density
 	/*const float b[5] = { -1.009f, -6.28792f, 7.50332f, -7.90463f, 0.629427f };
 	double Tr = reduced_temperature(T_Kelvin);
@@ -168,7 +174,9 @@ double nox_Vrho(double T_Kelvin)
 
 double nox_Cp(double T_Kelvin)
 {
-	double Cp = data_grab("Cp (l, J/gK)", T_Kelvin, "T", constT, headT);
+	data_gather(Pfile, constP, headP);
+	data_gather(Tfile, constT, headT);
+	double Cp = data_grab("Cp (l, J/g*K)", T_Kelvin, "T", constT, headT);
 	/*
 	const float b[5] = { 2.49973f, 0.023454f, -3.80136f, 13.0945f, -14.518f };
 	double Tr = reduced_temperature(T_Kelvin);

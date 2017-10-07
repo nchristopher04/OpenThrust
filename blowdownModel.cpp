@@ -3,6 +3,8 @@
 #include "thermo_functions.h"
 #include "Source.h"
 #include <iostream>
+#include <stdexcept>
+using namespace std;
 
 struct Faults {
 	char tempFault;
@@ -10,11 +12,8 @@ struct Faults {
 }blowdownModel;
 
 void tankProps(double timeStep, double tankVolume, double oxyMass, double &vaporizedMass_prev, double &liquidMass_prev, double &T_Kelvin, double &TankPressure) {
-	double liquidMass, vaporMass, deltaQ, vaporizedMass;
+	double liquidMass = 0, vaporMass = 0, deltaQ = 0, vaporizedMass = 0;
 		double lagged=0.0;
-
-	deltaQ = vaporizedMass_prev*nox_enthV(T_Kelvin);
-	T_Kelvin -= (deltaQ / (oxyMass * nox_Cp(T_Kelvin)));  // define a heat capacity for the whole system
 	if (T_Kelvin < (183))
 	{
 		std::cout << "TempFault L :" << T_Kelvin;
@@ -28,13 +27,15 @@ void tankProps(double timeStep, double tankVolume, double oxyMass, double &vapor
 		T_Kelvin = 309.15;
 		blowdownModel.tempFault = 'H';
 	}
+	deltaQ = vaporizedMass_prev*nox_enthV(T_Kelvin);
+	T_Kelvin -= (deltaQ / (oxyMass * nox_Cp(T_Kelvin)));  // define a heat capacity for the whole system
 
 	TankPressure = nox_vp(T_Kelvin);
 
-	liquidMass = (tankVolume - (oxyMass / nox_Vrho(T_Kelvin))) / ((1.0 / nox_Lrho(T_Kelvin)) - (1.0 / nox_Vrho(T_Kelvin))); //check this for validity
+	liquidMass = (tankVolume - (oxyMass / nox_Vrho(T_Kelvin))) / ((1.0 / nox_Lrho(T_Kelvin)) - (1.0 / nox_Vrho(T_Kelvin))); //check this for validity =NAN
 	vaporMass = oxyMass - liquidMass;
 
-	vaporizedMass = liquidMass_prev - liquidMass;
+	vaporizedMass = (liquidMass_prev - liquidMass);
 	if (vaporizedMass < 0) {
 		blowdownModel.vaporFault = true;
 	}
