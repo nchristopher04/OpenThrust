@@ -19,7 +19,7 @@ double k;								// Heat capacity ratio []
 double R;								// Specific gas constant [kJ/kg*k]
 double Tc;								// Chamber temperature [k]
 double Cf;								// Thrust coefficient []
-double Tt;								// NOS Tank Temperature
+double Tt, T_Kelvin;					// NOS Tank Temperature
 //int PcRound10;						// Casts chamber pressure to integer
 double err;								// Used for calculating relative error
 double tankVolume, tankPressure;		//Total tank volume [m^3], tank absolute pressure [kPa]
@@ -57,6 +57,7 @@ int main() {
 	cout << "Input initial params." << endl;
 	cout << "Initial NOS Temperature [Celsius]:  ";
 	cin >> Tt;
+	T_Kelvin = Tt + 273.15;
 	cout << "Abs. Chamber Pressure [PSI]:  ";
 	cin >> Pc;
 
@@ -64,6 +65,7 @@ int main() {
 	cin >> oxyMass;
 
 	 MainX.flowModel = 2;
+	 MainX.integrationType = 2;
 
 	for (int x = 0; x < 1000; x++) { //time steps
 		
@@ -77,11 +79,11 @@ int main() {
 				PcNew = calcPc(At, mDotNozzle, k, R, Tc);
 				err = abs(100 * (PcOld - PcNew) / PcOld);
 				PcOld = PcNew;
-				if (err < 0.05) { Pc = PcNew; err = 100; break; }
+				if (err < 5) { Pc = PcNew; err = 100; break; }
 				else if (i == 99) { throw runtime_error("PressureCalculatorDiverged"); }
 			}
 		}
-		else { 
+		else if (MainX.flowModel==1) { 
 			interpRPAValues(Pc, OF, k, R, Tc);
 			mDotNozzle = massFlowRate(At, Pc, k, R, Tc);
 			mDotInjector = massFlowRateInjector(mDotNozzle, OF); 
@@ -105,9 +107,9 @@ int main() {
 			liquidMass = oxyMass;
 		}
 		mDotInjector_old = mDotInjector;
-		tankProps(timeStep,tankVolume,oxyMass,vaporizedMass,liquidMass,Tt,tankPressure); //update new Temperature and tank pressure
+		tankProps(timeStep,tankVolume,oxyMass,vaporizedMass,liquidMass,T_Kelvin,tankPressure); //update new Temperature and tank pressure
 		// Creates outputs for each timestep
-
+		Tt = T_Kelvin; //Because tankProps runs in Kelvin and everything else runs in Celcius, we should fix this
 		time[x] = x*timeStep;
 		thrust[x] = At*(Pc*PSI_TO_PA)*Cf;
 		cout << "T+" << time[x] << " s =>>> Oxy Mass: " <<  oxyMass << "kg | Chamber Pressure: " <<  Pc << " psi | " << 
@@ -164,7 +166,7 @@ double thrustCoefficient(double Patm, double A2, double Pc) {
 	return Cf; 
 }
 
-void RPALookup(double OF, double Pc, double &k, double &R, double &Tc) {
+void RPALookup(double Pc, double OF, double &k, double &R, double &Tc) {
 	// Find k, R, Tc from table and return them to the program
 	// Inputs in [psi], []
 	// No output but stores values in variables k, R, Tc
@@ -206,6 +208,7 @@ double bilinInterp(double x1, double x2, double y1, double y2,
 }
 
 void interpRPAValues(double Pc, double OF, double &k, double &R, double &Tc) {
+	
 	double OF1, OF2, Pc1, Pc2;				// Used to interpolate RPA values
 	double k1, k2, k3, k4;					// Used to interpolate k value
 	double R1, R2, R3, R4;					// Used to interpolate R value
