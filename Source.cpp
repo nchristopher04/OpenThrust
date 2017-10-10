@@ -122,7 +122,7 @@ int main() {
 		cout << "T+" << time[x] << " s =>>> Oxy Mass: " <<  oxyMass << "kg | Chamber Pressure: " <<  Pc << " psi | " << 
 			"Injector flow rate: " << mDotInjector << " kg/s" << endl;
 		output(simFile,time[x], oxyMass, Pc, thrust[x], mDotInjector);//output to csv
-
+		Tt = T_Kelvin - 273.15;
 		if (oxyMass <= 0.01) { cout << "Empty"; system("PAUSE"); };
 	}
 
