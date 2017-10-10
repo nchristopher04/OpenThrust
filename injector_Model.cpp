@@ -40,7 +40,6 @@ This code is used to determine when critical mass flow will occur in our injecto
 */
 double injectorModel(double T1, double P2F)
 {
-	T1 += 273.15;//convert to kelvin 
 	//**********INJECTOR GEOMETRY**********
 	double L = 25.4;//orifice length (mm)
 	double Di = 2.00;//orifice diameter (mm)

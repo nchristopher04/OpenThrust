@@ -74,6 +74,7 @@ RPA_Table lookUp(double Chamber_Pressure, double OF, Look_Up_Table Table)
 	try {
 		for (int i = 0; i < (Table.RPA_Vector.size()); i++)
 		{
+			//cout << i<<OF<<Chamber_Pressure<< Table.RPA_Vector[i].OF_Ratio;
 			if (Table.RPA_Vector[i].OF_Ratio == OF)
 			{
 				if (Table.RPA_Vector[i].Chamber_Pressure == Chamber_Pressure)

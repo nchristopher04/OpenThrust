@@ -98,6 +98,7 @@ double total_enthalpy(double specific_enthalpy, double mass)
 /* Nitrous oxide vapour pressure, kPa */
 double nox_vp(double T_Kelvin)
 {
+	T_Kelvin -= 273.15;
 	data_gather(Pfile, constP, headP);
 	data_gather(Tfile, constT, headT);
 	double pVap= data_grab("Pressure (psia)", T_Kelvin, "T", constT, headT);
@@ -116,6 +117,7 @@ double nox_vp(double T_Kelvin)
 /* Nitrous liquid Enthalpy (Latent heat) of vaporisation, J/kg */
 double nox_enthV(double T_Kelvin)
 {
+	T_Kelvin -= 273.15;
 	data_gather(Pfile, constP, headP);
 	data_gather(Tfile, constT, headT);
 	double Hvap = 0;
@@ -143,6 +145,7 @@ double Hvap = (shonaV - shonaL) * 1000.0;  net during change from liquid to vapo
 
 double nox_Lrho(double T_Kelvin)
 {
+	T_Kelvin -= 273.15;
 	data_gather(Pfile, constP, headP);
 	data_gather(Tfile, constT, headT);
 
@@ -159,6 +162,7 @@ double nox_Lrho(double T_Kelvin)
 /* Nitrous oxide saturated vapour density, kg/m3 */
 double nox_Vrho(double T_Kelvin)
 {
+	T_Kelvin -= 273.15;
 	data_gather(Pfile, constP, headP);
 	data_gather(Tfile, constT, headT);
 	double rho=data_grab("Density (v, kg/m3)", T_Kelvin, "T", constT, headT);//NIST VAPOR density
@@ -174,6 +178,7 @@ double nox_Vrho(double T_Kelvin)
 
 double nox_Cp(double T_Kelvin)
 {
+	T_Kelvin -= 273.15;
 	data_gather(Pfile, constP, headP);
 	data_gather(Tfile, constT, headT);
 	double Cp = data_grab("Cp (l, J/g*K)", T_Kelvin, "T", constT, headT);
