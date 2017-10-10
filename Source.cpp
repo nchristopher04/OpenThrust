@@ -22,7 +22,7 @@ double Cf;								// Thrust coefficient []
 double Tt, T_Kelvin;					// NOS Tank Temperature
 //int PcRound10;						// Casts chamber pressure to integer
 double err;								// Used for calculating relative error
-double tankVolume, tankPressure;		//Total tank volume [m^3], tank absolute pressure [kPa]
+double tankVolume = 0.0004, tankPressure;		//Total tank volume [m^3], tank absolute pressure [kPa]
 const double timeStep = 0.1;			// [s]
 struct options {                        //define all model options here
 	int flowModel;
@@ -51,18 +51,26 @@ void output(ofstream& out, Arg&& arg, Args&&... args)
 } //this is a variadic print function to output.csv
 
 int main() {
-	double liquidMass, vaporizedMass;
+	double liquidMass, vaporizedMass=0;
 	ofstream simFile("output.csv");
 	simFile << "Time (s), Liquid Mass (kg)  ,  Chamber Pressure (PSI), Thrust (N), Mass Flow Rate (kg/s)" << '\n'; //setup basic output format
 	cout << "Input initial params." << endl;
-	cout << "Initial NOS Temperature [Celsius]:  ";
-	cin >> Tt;
-	T_Kelvin = Tt + 273.15;
-	cout << "Abs. Chamber Pressure [PSI]:  ";
-	cin >> Pc;
-
-	cout << "Input initial oxidizer mass in [kg]:  ";
-	cin >> oxyMass;
+	bool flag = 1;
+	while (flag == 1) {
+		cout << "Initial NOS Temperature [Celsius]:  ";
+		cin >> Tt;
+		T_Kelvin = Tt + 273.15;
+		cout << "Abs. Chamber Pressure [PSI]:  ";
+		cin >> Pc;
+		cout << "Input initial oxidizer mass in [kg]:  ";
+		cin >> oxyMass;
+		if (oxyMass > tankVolume*nox_Lrho(T_Kelvin)) {
+			cout << "Density exceeds sat.Liquid density" << endl;
+			cout << "Max expected mass @ T: "<<(tankVolume*nox_Lrho(T_Kelvin))<<endl;
+			flag = 1;
+		}
+		else flag = 0;
+	}
 
 	 MainX.flowModel = 2;
 	 MainX.integrationType = 2;
@@ -74,7 +82,7 @@ int main() {
 			PcOld = Pc;
 			for (int i = 0; i < 100; i++) {
 				interpRPAValues(PcOld, OF, k, R, Tc);
-				mDotInjector = interpInjectorModel(Tt, PcOld);
+				mDotInjector = interpInjectorModel(Tt, PcOld); 
 				mDotNozzle = massFlowRateNozzle(mDotInjector, OF);
 				PcNew = calcPc(At, mDotNozzle, k, R, Tc);
 				err = abs(100 * (PcOld - PcNew) / PcOld);
@@ -109,14 +117,13 @@ int main() {
 		mDotInjector_old = mDotInjector;
 		tankProps(timeStep,tankVolume,oxyMass,vaporizedMass,liquidMass,T_Kelvin,tankPressure); //update new Temperature and tank pressure
 		// Creates outputs for each timestep
-		Tt = T_Kelvin; //Because tankProps runs in Kelvin and everything else runs in Celcius, we should fix this
 		time[x] = x*timeStep;
 		thrust[x] = At*(Pc*PSI_TO_PA)*Cf;
 		cout << "T+" << time[x] << " s =>>> Oxy Mass: " <<  oxyMass << "kg | Chamber Pressure: " <<  Pc << " psi | " << 
 			"Injector flow rate: " << mDotInjector << " kg/s" << endl;
 		output(simFile,time[x], oxyMass, Pc, thrust[x], mDotInjector);//output to csv
 
-		if (oxyMass <= 0.01) { cout << "Empty"; cin; break; };
+		if (oxyMass <= 0.01) { cout << "Empty"; system("PAUSE"); };
 	}
 
 }
