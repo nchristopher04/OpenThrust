@@ -18,6 +18,7 @@ Planned Future Additions
 - Easier to change rocket parameters (through cfg file maybe)
 - Non constant OF ratio
 - Documentation of current code
+- Adding a plotter to program
 - Code cleanup, making everything more readable to users (maybe following a style guide if its not a huge hassle
 - Bugfixes
 - Optimization
