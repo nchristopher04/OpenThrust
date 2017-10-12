@@ -11,52 +11,44 @@
     </Filter>
     <Filter Include="Resource Files">
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
-      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav</Extensions>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Source.cpp">
+    <ClCompile Include="src\blowdownModel.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="injector_Model.cpp">
+    <ClCompile Include="src\injector_Model.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Nozzle_flow.cpp">
+    <ClCompile Include="src\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="RPA_to_struct.cpp">
+    <ClCompile Include="src\Nozzle_flow.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="thermo_functions.cpp">
+    <ClCompile Include="src\RPA_to_struct.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="blowdownModel.cpp">
+    <ClCompile Include="src\thermo_functions.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="injector_Model.h">
+    <ClInclude Include="include\blowdownModel.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="RPA_to_struct.h">
+    <ClInclude Include="include\injector_Model.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="thermo_functions.h">
+    <ClInclude Include="include\main.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Source.h">
+    <ClInclude Include="include\RPA_to_struct.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="blowdownModel.h">
+    <ClInclude Include="include\thermo_functions.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <Text Include="N20_100_1000PSI.txt" />
-    <Text Include="N20_Neg30_35T.txt" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="output.csv" />
-    <None Include="RPA_Output_Table.csv" />
   </ItemGroup>
 </Project>

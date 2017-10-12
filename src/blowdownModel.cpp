@@ -1,7 +1,7 @@
 #include <cmath>
 #include "blowdownModel.h"
 #include "thermo_functions.h"
-#include "Source.h"
+#include "main.h"
 #include <iostream>
 #include <stdexcept>
 using namespace std;
