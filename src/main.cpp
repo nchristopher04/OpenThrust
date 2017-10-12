@@ -5,7 +5,7 @@
 #include <fstream>
 #include <stdexcept>
 #include "injector_Model.h"
-#include "Source.h"
+#include "main.h"
 #include "blowdownModel.h"
 
 using namespace std;
