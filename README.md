@@ -35,5 +35,23 @@ Contribute
 - Issue Tracker: github.com/nchristopher04/OpenThrust/issues
 - Source Code: github.com/nchristopher04/OpenThrust
 
+Disclaimer
+----------
+This program merely models the thrust and apogee of a rocket using research and data. It can not guarantee the safety or functionality of any rocket being built. We do not take any responsibility for any mistakes, accidents, disasters, etc. that can occur while building or testing your rocket. This program is meant as an aide and should not be used as the sole source of data. Double check all your calculations and always follow proper safety procedures. 
+
 License
 -------
+OpenThrust is licensed under GPL 3. 
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
