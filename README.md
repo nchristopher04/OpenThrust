@@ -15,12 +15,7 @@ Features
 Planned Future Additions
 ------------------------
 
-- Easier to change rocket parameters (through cfg file maybe)
-- Non constant OF ratio
-- Documentation of current code
-- Code cleanup, making everything more readable to users (maybe following a style guide if its not a huge hassle
-- Bugfixes
-- Optimization
+For a list of planned additions, visit www.github.com/nchristopher04/OpenThrust/wiki/Planned-Features
 
 Using the Program
 -----------------
@@ -32,8 +27,8 @@ Then you should go through the code files and switch the values to correspond to
 Contribute
 ----------
 
-- Issue Tracker: github.com/nchristopher04/OpenThrust/issues
-- Source Code: github.com/nchristopher04/OpenThrust
+- Issue Tracker: www.github.com/nchristopher04/OpenThrust/issues
+- Source Code: www.github.com/nchristopher04/OpenThrust
 
 Disclaimer
 ----------
