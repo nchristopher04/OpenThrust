@@ -5,7 +5,7 @@
 #include <fstream>
 #include <stdexcept>
 #include "injector_Model.h"
-#include "main.h"
+#include "Source.h"
 #include "blowdownModel.h"
 
 using namespace std;
@@ -19,11 +19,9 @@ double k;								// Heat capacity ratio []
 double R;								// Specific gas constant [kJ/kg*k]
 double Tc;								// Chamber temperature [k]
 double Cf;								// Thrust coefficient []
-double Tt, T_Kelvin;					// NOS Tank Temperature
-//int PcRound10;						// Casts chamber pressure to integer
+double Tt;								// NOS Tank Temperature
+//int PcRound10;							// Casts chamber pressure to integer
 double err;								// Used for calculating relative error
-double tankVolume = 0.0004, tankPressure;		//Total tank volume [m^3], tank absolute pressure [kPa]
-const double timeStep = 0.1;			// [s]
 struct options {                        //define all model options here
 	int flowModel;
 	int integrationType;
@@ -51,29 +49,19 @@ void output(ofstream& out, Arg&& arg, Args&&... args)
 } //this is a variadic print function to output.csv
 
 int main() {
-	double liquidMass, vaporizedMass=0;
+	double liquidMass, vaporizedMass;
 	ofstream simFile("output.csv");
 	simFile << "Time (s), Liquid Mass (kg)  ,  Chamber Pressure (PSI), Thrust (N), Mass Flow Rate (kg/s)" << '\n'; //setup basic output format
 	cout << "Input initial params." << endl;
-	bool flag = 1;
-	while (flag == 1) {
-		cout << "Initial NOS Temperature [Celsius]:  ";
-		cin >> Tt;
-		T_Kelvin = Tt + 273.15;
-		cout << "Abs. Chamber Pressure [PSI]:  ";
-		cin >> Pc;
-		cout << "Input initial oxidizer mass in [kg]:  ";
-		cin >> oxyMass;
-		if (oxyMass > tankVolume*nox_Lrho(T_Kelvin)) {
-			cout << "Density exceeds sat.Liquid density" << endl;
-			cout << "Max expected mass @ T: "<<(tankVolume*nox_Lrho(T_Kelvin))<<endl;
-			flag = 1;
-		}
-		else flag = 0;
-	}
+	cout << "Initial NOS Temperature [Celsius]:  ";
+	cin >> Tt;
+	cout << "Abs. Chamber Pressure [PSI]:  ";
+	cin >> Pc;
+
+	cout << "Input initial oxidizer mass in [kg]:  ";
+	cin >> oxyMass;
 
 	 MainX.flowModel = 2;
-	 MainX.integrationType = 2;
 
 	for (int x = 0; x < 1000; x++) { //time steps
 		
@@ -82,16 +70,16 @@ int main() {
 			PcOld = Pc;
 			for (int i = 0; i < 100; i++) {
 				interpRPAValues(PcOld, OF, k, R, Tc);
-				mDotInjector = interpInjectorModel(Tt, PcOld); 
+				mDotInjector = interpInjectorModel(Tt, PcOld);
 				mDotNozzle = massFlowRateNozzle(mDotInjector, OF);
 				PcNew = calcPc(At, mDotNozzle, k, R, Tc);
 				err = abs(100 * (PcOld - PcNew) / PcOld);
 				PcOld = PcNew;
-				if (err < 5) { Pc = PcNew; err = 100; break; }
-				else if (i == 99) { throw runtime_error("PressureCalculatorDiverged"); }
+				if (err < 0.05) { Pc = PcNew; err = 100; break; }
+				else if (i == 99) { throw "PressureCalculatorDiverged"; }
 			}
 		}
-		else if (MainX.flowModel==1) { 
+		else { 
 			interpRPAValues(Pc, OF, k, R, Tc);
 			mDotNozzle = massFlowRate(At, Pc, k, R, Tc);
 			mDotInjector = massFlowRateInjector(mDotNozzle, OF); 
@@ -99,9 +87,9 @@ int main() {
 		Cf = thrustCoefficient(14.7, A2, Pc);
 
 		try { //catch negative flow exception, display to user and break loop
-			if (mDotNozzle < 0 || mDotInjector < 0) { throw runtime_error("massFlowNegative"); }
+			if (mDotNozzle < 0 || mDotInjector < 0) { throw "massFlowNegative"; }
 		}
-		catch (runtime_error& e)
+		catch (exception& e)
 		{
 			cout << e.what() << '\n'; //catch exception, display to user and break loop
 			break;
@@ -115,19 +103,16 @@ int main() {
 			liquidMass = oxyMass;
 		}
 		mDotInjector_old = mDotInjector;
-<<<<<<< HEAD:Source.cpp
 		tankProps(oxyMass,vaporizedMass,liquidMass,Tt,tankPressure); //update new Temperature and tank pressure
-=======
-		tankProps(timeStep,tankVolume,oxyMass,vaporizedMass,liquidMass,T_Kelvin,tankPressure); //update new Temperature and tank pressure
->>>>>>> master:src/main.cpp
 		// Creates outputs for each timestep
+
 		time[x] = x*timeStep;
 		thrust[x] = At*(Pc*PSI_TO_PA)*Cf;
 		cout << "T+" << time[x] << " s =>>> Oxy Mass: " <<  oxyMass << "kg | Chamber Pressure: " <<  Pc << " psi | " << 
 			"Injector flow rate: " << mDotInjector << " kg/s" << endl;
 		output(simFile,time[x], oxyMass, Pc, thrust[x], mDotInjector);//output to csv
-		Tt = T_Kelvin - 273.15;
-		if (oxyMass <= 0.01) { cout << "Empty"; system("PAUSE"); };
+
+		if (oxyMass <= 0.01) { cout << "Empty"; cin; break; };
 	}
 
 }
@@ -219,7 +204,6 @@ double bilinInterp(double x1, double x2, double y1, double y2,
 }
 
 void interpRPAValues(double Pc, double OF, double &k, double &R, double &Tc) {
-	
 	double OF1, OF2, Pc1, Pc2;				// Used to interpolate RPA values
 	double k1, k2, k3, k4;					// Used to interpolate k value
 	double R1, R2, R3, R4;					// Used to interpolate R value
