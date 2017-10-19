@@ -1,7 +1,7 @@
 #include <cmath>
-#include "blowdownModel.h"
-#include "thermo_functions.h"
-#include "main.h"
+#include "../include/blowdownModel.h"
+#include "../include/thermo_functions.h"
+#include "../include/main.h"
 #include <iostream>
 #include <stdexcept>
 using namespace std;
@@ -40,11 +40,12 @@ void tankProps(double timeStep, double tankVolume, double oxyMass, double &vapor
 	vaporMass = oxyMass - liquidMass;
 
 	vaporizedMass = (liquidMass_prev - liquidMass);
-	if (vaporizedMass < 0 || NoxQuality<0) {
+	if (vaporizedMass < 0 || NoxQuality<0|| NoxQuality>1 || vaporizedMass>oxyMass) {
 		blowdownModel.vaporFault = true;
-		throw (invalid_argument("vaporFault"));
+		cout << "VaporFault" << blowdownModel.vaporFault << endl;
+		system("Pause");
 	}
-	lagged = (timeStep / 0.15) * (vaporizedMass - lagged) + lagged; // 1st-order lag
+	lagged = (timeStep / 15) * (vaporizedMass - lagged) + lagged; // 1st-order lag
 	vaporizedMass_prev = lagged; //to be used in next iteration
 	liquidMass_prev = liquidMass; //set liquidmass_old for next iteration to current, get pushed outside of this function to main iterator
 	}

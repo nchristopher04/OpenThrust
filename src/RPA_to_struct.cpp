@@ -1,18 +1,20 @@
 #include <iostream>
 #include <string>
 #include <fstream>
-#include "RPA_to_struct.h"
+#include "../include/RPA_to_struct.h"
 #include <stdexcept>
 
 using namespace std;
 
 const int TABLE_LENGTH = 21000;								// Doesn't actually have to be table length, just longer
-const string FILE_PATH = "RPA_Output_Table.csv";			// File path of csv table 
+			// File path of csv table 
 const double UNIV_GAS_CONST = 8.314;						// [kJ/kmol*K]
 
 Look_Up_Table Create_Table_Array()
 {
-	ifstream file(FILE_PATH);			
+	const string PATH = ".\\RPA_Output_Table.csv";
+	ifstream file;
+	file.open(PATH);
 	string row, cell;
 	string delimiter = ",";						// Only works for csv files because they are comma seperated
 	Look_Up_Table Table;
@@ -80,7 +82,7 @@ RPA_Table lookUp(double Chamber_Pressure, double OF, Look_Up_Table Table)
 				if (Table.RPA_Vector[i].Chamber_Pressure == Chamber_Pressure)
 				{
 					return Table.RPA_Vector[i];
-					cout << "lookup succeeded";
+				
 				}
 			}
 			if (i == (Table.RPA_Vector.size() - 1)) {
