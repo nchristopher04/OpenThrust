@@ -22,12 +22,13 @@ double Cf;								// Thrust coefficient []
 double Tt, T_Kelvin;					// NOS Tank Temperature
 //int PcRound10;						// Casts chamber pressure to integer
 double err;								// Used for calculating relative error
-double tankVolume = 0.069;//Total tank volume [m^3],
+double tankVolume = 0.0069;//Total tank volume [m^3],
 double tankPressure;		 //tank absolute pressure [kPa]
-const double timeStep = 0.1;			// [s]
+const double timeStep = 0.05;			// [s]
 struct options {                        //define all model options here
 	int flowModel;
 	int integrationType;
+	double convergeWeighting;
 }MainX;
 
 // Already defined
@@ -75,6 +76,7 @@ int main() {
 
 	 MainX.flowModel = 2;
 	 MainX.integrationType = 2;
+	 MainX.convergeWeighting = 0.2;
 
 	for (int x = 0; x < 1000; x++) { //time steps
 		
@@ -88,7 +90,7 @@ int main() {
 					mDotNozzle = massFlowRateNozzle(mDotInjector, OF);
 					PcNew = calcPc(At, mDotNozzle, k, R, Tc);
 					err = abs(100 * (PcOld - PcNew) / PcOld);
-					PcOld = PcNew;
+					PcOld = (PcNew-PcOld)*MainX.convergeWeighting+PcOld;
 					if (err < 5) { Pc = PcNew; err = 100; break; }
 					else if (i == 99) { throw runtime_error("PressureCalculatorDiverged"); }
 				}
@@ -96,7 +98,6 @@ int main() {
 				catch (runtime_error& e)
 				{
 					cout << e.what() << '\n'; //catch exception, display to user and break loop
-					break;
 				
 			}
 		}
@@ -130,7 +131,7 @@ int main() {
 		time[x] = x*timeStep;
 		thrust[x] = At*(Pc*PSI_TO_PA)*Cf;
 		cout << "T+" << time[x] << " s =>>> Oxy Mass: " <<  oxyMass << "kg | Chamber Pressure: " <<  Pc << " psi | " << 
-			"Injector flow rate: " << mDotInjector << " kg/s" << endl;
+			"Injector flow rate: " << mDotInjector << " kg/s | Tank Temperature" <<T_Kelvin<<" K"<< endl;
 		output(simFile,time[x], oxyMass, Pc, thrust[x], mDotInjector);//output to csv
 		Tt = T_Kelvin - 273.15;
 		if (oxyMass <= 0.01) { cout << "Empty"; system("PAUSE"); };
