@@ -1,8 +1,8 @@
 #include <iostream>
 #include <cmath>
 #include <fstream>
-#include "thermo_functions.h"
-#include "injector_Model.h"
+#include "../include/thermo_functions.h"
+#include "../include/injector_Model.h"
 #include <sstream>
 #include <string>
 using namespace std;

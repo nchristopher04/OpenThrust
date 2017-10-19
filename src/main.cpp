@@ -1,12 +1,12 @@
 #include <iostream>
 #include <cmath>
-#include "RPA_to_struct.h"
-#include "thermo_functions.h"
+#include "../include/RPA_to_struct.h"
+#include "../include/thermo_functions.h"
 #include <fstream>
 #include <stdexcept>
-#include "injector_Model.h"
-#include "main.h"
-#include "blowdownModel.h"
+#include "../include/injector_Model.h"
+#include "../include/main.h"
+#include "../include/blowdownModel.h"
 
 using namespace std;
 
@@ -22,7 +22,8 @@ double Cf;								// Thrust coefficient []
 double Tt, T_Kelvin;					// NOS Tank Temperature
 //int PcRound10;						// Casts chamber pressure to integer
 double err;								// Used for calculating relative error
-double tankVolume = 0.0004, tankPressure;		//Total tank volume [m^3], tank absolute pressure [kPa]
+double tankVolume = 0.069;//Total tank volume [m^3],
+double tankPressure;		 //tank absolute pressure [kPa]
 const double timeStep = 0.1;			// [s]
 struct options {                        //define all model options here
 	int flowModel;
@@ -80,15 +81,23 @@ int main() {
 		// Finds all relevant values for thrust
 		if (MainX.flowModel == 2) {
 			PcOld = Pc;
-			for (int i = 0; i < 100; i++) {
-				interpRPAValues(PcOld, OF, k, R, Tc);
-				mDotInjector = interpInjectorModel(Tt, PcOld); 
-				mDotNozzle = massFlowRateNozzle(mDotInjector, OF);
-				PcNew = calcPc(At, mDotNozzle, k, R, Tc);
-				err = abs(100 * (PcOld - PcNew) / PcOld);
-				PcOld = PcNew;
-				if (err < 5) { Pc = PcNew; err = 100; break; }
-				else if (i == 99) { throw runtime_error("PressureCalculatorDiverged"); }
+			try {
+				for (int i = 0; i < 100; i++) {
+					interpRPAValues(PcOld, OF, k, R, Tc);
+					mDotInjector = interpInjectorModel(Tt, PcOld);
+					mDotNozzle = massFlowRateNozzle(mDotInjector, OF);
+					PcNew = calcPc(At, mDotNozzle, k, R, Tc);
+					err = abs(100 * (PcOld - PcNew) / PcOld);
+					PcOld = PcNew;
+					if (err < 5) { Pc = PcNew; err = 100; break; }
+					else if (i == 99) { throw runtime_error("PressureCalculatorDiverged"); }
+				}
+			}
+				catch (runtime_error& e)
+				{
+					cout << e.what() << '\n'; //catch exception, display to user and break loop
+					break;
+				
 			}
 		}
 		else if (MainX.flowModel==1) { 
@@ -115,11 +124,8 @@ int main() {
 			liquidMass = oxyMass;
 		}
 		mDotInjector_old = mDotInjector;
-<<<<<<< HEAD:Source.cpp
-		tankProps(oxyMass,vaporizedMass,liquidMass,Tt,tankPressure); //update new Temperature and tank pressure
-=======
+
 		tankProps(timeStep,tankVolume,oxyMass,vaporizedMass,liquidMass,T_Kelvin,tankPressure); //update new Temperature and tank pressure
->>>>>>> master:src/main.cpp
 		// Creates outputs for each timestep
 		time[x] = x*timeStep;
 		thrust[x] = At*(Pc*PSI_TO_PA)*Cf;
