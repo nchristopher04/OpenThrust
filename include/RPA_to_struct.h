@@ -27,7 +27,15 @@ struct Look_Up_Table
 	std::vector<RPA_Table> RPA_Vector;
 };
 
-Look_Up_Table Create_Table_Array();
-RPA_Table lookUp(double, double, Look_Up_Table);
+struct Limits_Table
+{
+	double mxPc;
+	double mnPc;
+	double mxOF;
+	double mnOF;
+};
 
+Look_Up_Table Create_Table_Array();
+RPA_Table lookUp(double, double, Look_Up_Table, Limits_Table);
+Limits_Table Find_Limits(Look_Up_Table);
 #endif // !RPA_TO_STRUCT_H

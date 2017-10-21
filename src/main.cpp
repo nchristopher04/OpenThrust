@@ -1,12 +1,13 @@
 #include <iostream>
 #include <cmath>
-#include "../include/RPA_to_struct.h"
-#include "../include/thermo_functions.h"
 #include <fstream>
 #include <stdexcept>
+#include "../include/RPA_to_struct.h"
+#include "../include/thermo_functions.h"
 #include "../include/injector_Model.h"
 #include "../include/main.h"
 #include "../include/blowdownModel.h"
+#include "../include/cfg_file_reader.h"
 
 using namespace std;
 
@@ -22,23 +23,23 @@ double Cf;								// Thrust coefficient []
 double Tt, T_Kelvin;					// NOS Tank Temperature
 //int PcRound10;						// Casts chamber pressure to integer
 double err;								// Used for calculating relative error
-double tankVolume = 0.0069;//Total tank volume [m^3],
-double tankPressure;		 //tank absolute pressure [kPa]
-const double timeStep = 0.05;			// [s]
-struct options {                        //define all model options here
-	int flowModel;
-	int integrationType;
-	double convergeWeighting;
-}MainX;
+double tankPressure;					// Tank absolute pressure [kPa]
 
 // Already defined
-const double At = 0.000382646;			// Nozzle throat area [m^2]
-const double A2 = 0.00181001;			// Nozzle exit area [m^2]
-double OF = 2.1;						// Oxidizer-fuel ratio assumed constant to start
 double mDotNozzle, mDotInjector;		// Mass flow rates at the nozzle and the injector [kg/s]
 double mDotInjector_old;				//Prev iteration mass flow rate
 double time[1000], thrust[1000];		// Output arrays that give thrust over time
+
 Look_Up_Table Table_Array = Create_Table_Array();
+Limits_Table Limits = Find_Limits(Table_Array);
+
+// Parses cfg file and stores values in variables
+Rocket_Properties MainX = Read_File();
+double At = MainX.throatArea;
+double A2 = MainX.exitArea;
+double tankVolume = MainX.oxTankVolume;
+double timeStep = MainX.timeStep;
+double OF = MainX.OF;
 
 
 template <typename Arg, typename... Args>
@@ -73,10 +74,6 @@ int main() {
 		}
 		else flag = 0;
 	}
-
-	 MainX.flowModel = 2;
-	 MainX.integrationType = 2;
-	 MainX.convergeWeighting = 0.2;
 
 	for (int x = 0; x < 1000; x++) { //time steps
 		
@@ -189,7 +186,7 @@ void RPALookup(double Pc, double OF, double &k, double &R, double &Tc) {
 	// Inputs in [psi], []
 	// No output but stores values in variables k, R, Tc
 	// Stored in [], [kJ/kg*K], [k]
-	RPA_Table CombustionProps = lookUp(Pc, OF, Table_Array);
+	RPA_Table CombustionProps = lookUp(Pc, OF, Table_Array, Limits);
 	k = CombustionProps.k_value;
 	R = CombustionProps.R_value;
 	Tc = CombustionProps.Chamber_Temperture;
