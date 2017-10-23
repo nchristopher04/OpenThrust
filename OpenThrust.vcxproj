@@ -22,7 +22,7 @@
     <VCProjectVersion>15.0</VCProjectVersion>
     <ProjectGuid>{BC748A64-F230-47E0-85A4-E85C23B79A96}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <WindowsTargetPlatformVersion>10.0.15063.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -103,6 +103,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\blowdownModel.cpp" />
+    <ClCompile Include="src\cfg_file_reader.cpp" />
     <ClCompile Include="src\injector_Model.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\Nozzle_flow.cpp" />
@@ -111,6 +112,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\blowdownModel.h" />
+    <ClInclude Include="include\cfg_file_reader.h" />
     <ClInclude Include="include\injector_Model.h" />
     <ClInclude Include="include\main.h" />
     <ClInclude Include="include\RPA_to_struct.h" />
