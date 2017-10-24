@@ -3,7 +3,7 @@ OpenThrust
 
 OpenThrust is a software created by members of the Waterloo Rocketry design team at the University of Waterloo. The aim of the project is to provide an accurate thrust curve and apogee prediction for hybrid engine rockets that use NOS as their oxidizer.
 
-Wiki: https://github.com/nchristopher04/OpenThrust/wiki
+Wiki: https://github.com/nchristopher04/OpenThrust/wiki  
 Report: https://www.overleaf.com/read/kfprjrjbkmbh
 
 Features
