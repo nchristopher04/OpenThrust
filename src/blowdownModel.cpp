@@ -13,7 +13,7 @@ struct Faults {
 
 void tankProps(double timeStep, double tankVolume, double oxyMass, double &vaporizedMass_prev, double &liquidMass_prev, double &T_Kelvin, double &TankPressure) {
 	double liquidMass = 0, vaporMass = 0, deltaQ = 0, vaporizedMass = 0;
-		double lagged=0.0;
+		static double lagged=0.0;
 	if (T_Kelvin < (183))
 	{
 		std::cout << "TempFault L :" << T_Kelvin;
@@ -28,24 +28,24 @@ void tankProps(double timeStep, double tankVolume, double oxyMass, double &vapor
 		blowdownModel.tempFault = 'H';
 	}
 	deltaQ = vaporizedMass_prev*nox_enthV(T_Kelvin);
-	T_Kelvin -= (deltaQ / (oxyMass * nox_Cp(T_Kelvin)*1000));  // define a heat capacity for the whole system
+	T_Kelvin -= (deltaQ / (liquidMass_prev * nox_Cp(T_Kelvin)*1000));  // define a heat capacity for the whole system
 
 	TankPressure = nox_vp(T_Kelvin);
 	double liquidDensity = nox_Lrho(T_Kelvin);
 	double vaporDensity = nox_Vrho(T_Kelvin);
 	double combinedDensity = (oxyMass / tankVolume);
 	double NoxQuality = fluid_quality(combinedDensity, liquidDensity, vaporDensity);
+	cout << liquidMass_prev;
 	try{
 	liquidMass = (1-NoxQuality)*oxyMass;
 	vaporMass = oxyMass - liquidMass;
-
-	vaporizedMass = (liquidMass_prev - liquidMass);
+	vaporizedMass = liquidMass_prev - liquidMass;
 	if (vaporizedMass < 0 || NoxQuality<0|| NoxQuality>1 || vaporizedMass>oxyMass) {
 		blowdownModel.vaporFault = true;
 		cout << "VaporFault" << blowdownModel.vaporFault << endl;
 		system("Pause");
 	}
-	lagged = (timeStep / 15) * (vaporizedMass - lagged) + lagged; // 1st-order lag
+	lagged = (0.01) * (vaporizedMass - lagged) + lagged; // 1st-order lag 
 	vaporizedMass_prev = lagged; //to be used in next iteration
 	liquidMass_prev = liquidMass; //set liquidmass_old for next iteration to current, get pushed outside of this function to main iterator
 	}

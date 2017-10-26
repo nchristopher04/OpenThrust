@@ -23,7 +23,7 @@ double Cf;								// Thrust coefficient []
 double Tt, T_Kelvin;					// NOS Tank Temperature
 //int PcRound10;						// Casts chamber pressure to integer
 double err;								// Used for calculating relative error
-double tankPressure;					// Tank absolute pressure [kPa]
+double tankPressure;					// Tank absolute pressure [psi]
 
 // Already defined
 double mDotNozzle, mDotInjector;		// Mass flow rates at the nozzle and the injector [kg/s]
@@ -74,7 +74,9 @@ int main() {
 		}
 		else flag = 0;
 	}
-
+	liquidMass = oxyMass;//suppress errors from calc below
+	tankProps(0, tankVolume, oxyMass, vaporizedMass, liquidMass, T_Kelvin, tankPressure); //calc initial liquid mass and pressure
+	cout << "Initial liq Mass:"<<liquidMass;
 	for (int x = 0; x < 1000; x++) { //time steps
 		
 		// Finds all relevant values for thrust
@@ -113,25 +115,27 @@ int main() {
 			cout << e.what() << '\n'; //catch exception, display to user and break loop
 			break;
 		}
+		double deltaM;
 		if (MainX.integrationType == 1) { 
-			oxyMass -= mDotInjector*timeStep;
-			liquidMass = oxyMass; //assumes only liquid flow through injector
+			deltaM = mDotInjector*timeStep;
 		}
 		else if (MainX.integrationType == 2) {
-			oxyMass -= 0.5 * timeStep * (3.0 * mDotInjector - mDotInjector_old);//addams integration
-			liquidMass = oxyMass;
+			deltaM= 0.5 * timeStep * (3.0 * mDotInjector - mDotInjector_old);//addams integration
 		}
+		oxyMass -= deltaM;
+		liquidMass -= deltaM; //assumes pure liquid through injector
 		mDotInjector_old = mDotInjector;
 
 		tankProps(timeStep,tankVolume,oxyMass,vaporizedMass,liquidMass,T_Kelvin,tankPressure); //update new Temperature and tank pressure
+		
 		// Creates outputs for each timestep
 		time[x] = x*timeStep;
 		thrust[x] = At*(Pc*PSI_TO_PA)*Cf;
-		cout << "T+" << time[x] << " s =>>> Oxy Mass: " <<  oxyMass << "kg | Chamber Pressure: " <<  Pc << " psi | " << 
+		cout << "T+" << time[x] << " s =>>> Liquid Mass: " <<  liquidMass << "kg | Chamber Pressure: " <<  Pc << " psi | " << 
 			"Injector flow rate: " << mDotInjector << " kg/s | Tank Temperature" <<T_Kelvin<<" K"<< endl;
 		output(simFile,time[x], oxyMass, Pc, thrust[x], mDotInjector);//output to csv
 		Tt = T_Kelvin - 273.15;
-		if (oxyMass <= 0.01) { cout << "Empty"; system("PAUSE"); };
+		if (liquidMass <= 0.01) { cout << "Empty"; system("PAUSE"); };
 	}
 
 }
