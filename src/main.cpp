@@ -33,13 +33,6 @@ double time[1000], thrust[1000];		// Output arrays that give thrust over time
 Look_Up_Table Table_Array = Create_Table_Array();
 Limits_Table Limits = Find_Limits(Table_Array);
 
-// Parses cfg file and stores values in variables
-Rocket_Properties MainX = Read_File();
-double At = MainX.throatArea;
-double A2 = MainX.exitArea;
-double tankVolume = MainX.oxTankVolume;
-double timeStep = MainX.timeStep;
-double OF = MainX.OF;
 
 
 template <typename Arg, typename... Args>
@@ -53,7 +46,21 @@ void output(ofstream& out, Arg&& arg, Args&&... args)
 	out << '\n';
 } //this is a variadic print function to output.csv
 
-int main() {
+int main() 
+{
+	// Creates parser object, sets its path, and reads the file
+	OptionFileParser MainX;
+	MainX.SetPath("./settings.cfg", ":");
+	MainX.ReadFile();
+
+	
+	double At = MainX.mThroatArea;
+	double A2 = MainX.mExitArea;
+	double tankVolume = MainX.mOxTankVolume;
+	double timeStep = MainX.mTimeStep;
+	double OF = MainX.mOxFuelRatio;
+
+	
 	double liquidMass, vaporizedMass=0;
 	ofstream simFile("output.csv");
 	simFile << "Time (s), Liquid Mass (kg)  ,  Chamber Pressure (PSI), Thrust (N), Mass Flow Rate (kg/s)" << '\n'; //setup basic output format
@@ -78,7 +85,7 @@ int main() {
 	for (int x = 0; x < 1000; x++) { //time steps
 		
 		// Finds all relevant values for thrust
-		if (MainX.flowModel == 2) {
+		if (MainX.mFlowModel == 2) {
 			PcOld = Pc;
 			try {
 				for (int i = 0; i < 100; i++) {
@@ -87,7 +94,7 @@ int main() {
 					mDotNozzle = massFlowRateNozzle(mDotInjector, OF);
 					PcNew = calcPc(At, mDotNozzle, k, R, Tc);
 					err = abs(100 * (PcOld - PcNew) / PcOld);
-					PcOld = (PcNew-PcOld)*MainX.convergeWeighting+PcOld;
+					PcOld = (PcNew-PcOld)*MainX.mConvergenceWeight+PcOld;
 					if (err < 5) { Pc = PcNew; err = 100; break; }
 					else if (i == 99) { throw runtime_error("PressureCalculatorDiverged"); }
 				}
@@ -98,12 +105,12 @@ int main() {
 				
 			}
 		}
-		else if (MainX.flowModel==1) { 
+		else if (MainX.mFlowModel==1) { 
 			interpRPAValues(Pc, OF, k, R, Tc);
 			mDotNozzle = massFlowRate(At, Pc, k, R, Tc);
 			mDotInjector = massFlowRateInjector(mDotNozzle, OF); 
 		}
-		Cf = thrustCoefficient(14.7, A2, Pc);
+		Cf = thrustCoefficient(14.7, A2, Pc, At);
 
 		try { //catch negative flow exception, display to user and break loop
 			if (mDotNozzle < 0 || mDotInjector < 0) { throw runtime_error("massFlowNegative"); }
@@ -113,11 +120,11 @@ int main() {
 			cout << e.what() << '\n'; //catch exception, display to user and break loop
 			break;
 		}
-		if (MainX.integrationType == 1) { 
+		if (MainX.mIntegrationType == 1) { 
 			oxyMass -= mDotInjector*timeStep;
 			liquidMass = oxyMass; //assumes only liquid flow through injector
 		}
-		else if (MainX.integrationType == 2) {
+		else if (MainX.mIntegrationType == 2) {
 			oxyMass -= 0.5 * timeStep * (3.0 * mDotInjector - mDotInjector_old);//addams integration
 			liquidMass = oxyMass;
 		}
@@ -170,7 +177,7 @@ double massFlowRateNozzle(double mDotI, double OF_ratio) {
 	return mDotNoz;
 }
 
-double thrustCoefficient(double Patm, double A2, double Pc) {
+double thrustCoefficient(double Patm, double A2, double Pc, double At) {
 	// Calculates thrust coefficient for different chamber pressures
 	// Inputs in [psi], [m^2], [psi]
 	// Ouput is unitless
