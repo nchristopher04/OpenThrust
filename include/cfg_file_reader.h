@@ -27,7 +27,10 @@ class OptionFileParser
 		int mFlowModel;
 		int mIntegrationType;
 
+
+		// Methods
 		void SetPath(string path, string delimiter);
 		void ReadFile();
+		void WriteToFile();
 };
 #endif // !CFG_FILE_READER

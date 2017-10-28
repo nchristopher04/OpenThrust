@@ -49,16 +49,16 @@ void output(ofstream& out, Arg&& arg, Args&&... args)
 int main() 
 {
 	// Creates parser object, sets its path, and reads the file
-	OptionFileParser MainX;
-	MainX.SetPath("./settings.cfg", ":");
-	MainX.ReadFile();
+	OptionFileParser UserOptions;
+	UserOptions.SetPath("./settings.cfg", ":");
+	UserOptions.ReadFile();
 
 	
-	double At = MainX.mThroatArea;
-	double A2 = MainX.mExitArea;
-	double tankVolume = MainX.mOxTankVolume;
-	double timeStep = MainX.mTimeStep;
-	double OF = MainX.mOxFuelRatio;
+	double At = UserOptions.mThroatArea;
+	double A2 = UserOptions.mExitArea;
+	double tankVolume = UserOptions.mOxTankVolume;
+	double timeStep = UserOptions.mTimeStep;
+	double OF = UserOptions.mOxFuelRatio;
 
 	
 	double liquidMass, vaporizedMass=0;
@@ -85,7 +85,7 @@ int main()
 	for (int x = 0; x < 1000; x++) { //time steps
 		
 		// Finds all relevant values for thrust
-		if (MainX.mFlowModel == 2) {
+		if (UserOptions.mFlowModel == 2) {
 			PcOld = Pc;
 			try {
 				for (int i = 0; i < 100; i++) {
@@ -94,7 +94,7 @@ int main()
 					mDotNozzle = massFlowRateNozzle(mDotInjector, OF);
 					PcNew = calcPc(At, mDotNozzle, k, R, Tc);
 					err = abs(100 * (PcOld - PcNew) / PcOld);
-					PcOld = (PcNew-PcOld)*MainX.mConvergenceWeight+PcOld;
+					PcOld = (PcNew-PcOld)*UserOptions.mConvergenceWeight+PcOld;
 					if (err < 5) { Pc = PcNew; err = 100; break; }
 					else if (i == 99) { throw runtime_error("PressureCalculatorDiverged"); }
 				}
@@ -105,7 +105,7 @@ int main()
 				
 			}
 		}
-		else if (MainX.mFlowModel==1) { 
+		else if (UserOptions.mFlowModel==1) { 
 			interpRPAValues(Pc, OF, k, R, Tc);
 			mDotNozzle = massFlowRate(At, Pc, k, R, Tc);
 			mDotInjector = massFlowRateInjector(mDotNozzle, OF); 
@@ -120,11 +120,11 @@ int main()
 			cout << e.what() << '\n'; //catch exception, display to user and break loop
 			break;
 		}
-		if (MainX.mIntegrationType == 1) { 
+		if (UserOptions.mIntegrationType == 1) { 
 			oxyMass -= mDotInjector*timeStep;
 			liquidMass = oxyMass; //assumes only liquid flow through injector
 		}
-		else if (MainX.mIntegrationType == 2) {
+		else if (UserOptions.mIntegrationType == 2) {
 			oxyMass -= 0.5 * timeStep * (3.0 * mDotInjector - mDotInjector_old);//addams integration
 			liquidMass = oxyMass;
 		}

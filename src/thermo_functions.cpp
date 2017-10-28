@@ -8,7 +8,7 @@
 using namespace std;
 
 const double CELS_TO_KELVIN = 273.15;					// Conversion factor from [C] to [K]
-const double KPa_TO_BAR = 100;							//conversion from [kPa] to [bar]
+const double KPA_TO_BAR = 100;							//conversion from [kPa] to [bar]
 const double CRIT_TEMP_NOS = 309.55;					// Critical Temperature of NOS [K]
 const double CRIT_PRES_NOS = 7255;						// Critical Pressure of NOS [kPa]
 const double R_CONSTANT = 0.008314;						// Universal Gas Constant [kJ/(mol*K)]
@@ -110,8 +110,8 @@ double nox_vp(double T_Kelvin)
 	float shona = 0.0;
 	for (int dd = 0; dd < 4; dd++)
 		shona += b[dd] * pow(rab, p[dd]);
-	double  Pvap= (CRIT_PRES_NOS/KPa_TO_BAR) * exp((shona / Tr));
-	return(Pvap*KPa_TO_BAR); //should work without the conversions but I'm not sure so I'll leave converting through to bar*/
+	double  Pvap= (CRIT_PRES_NOS/KPA_TO_BAR) * exp((shona / Tr));
+	return(Pvap*KPA_TO_BAR); //should work without the conversions but I'm not sure so I'll leave converting through to bar*/
 	return(pVap);
 }
 /* Nitrous liquid Enthalpy (Latent heat) of vaporisation, J/kg */
