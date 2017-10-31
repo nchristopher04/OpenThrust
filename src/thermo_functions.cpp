@@ -8,7 +8,7 @@
 using namespace std;
 
 const double CELS_TO_KELVIN = 273.15;					// Conversion factor from [C] to [K]
-const double KPa_TO_BAR = 100;							//conversion from [kPa] to [bar]
+const double KPA_TO_BAR = 100;							//conversion from [kPa] to [bar]
 const double CRIT_TEMP_NOS = 309.55;					// Critical Temperature of NOS [K]
 const double CRIT_PRES_NOS = 7255;						// Critical Pressure of NOS [kPa]
 const double R_CONSTANT = 0.008314;						// Universal Gas Constant [kJ/(mol*K)]
