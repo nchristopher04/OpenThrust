@@ -21,7 +21,8 @@ ifstream Pfile("N20_100_1000PSI.txt");
 ifstream Tfile("N20_Neg30_35T.txt");
 
 double constT[30][100], constP[30][100];
-string headT[30], headP[30];
+string headT[30], headP[30]; //global scope
+
 
 double reduced_temperature(double Temp_Kelvin)
 {
@@ -96,99 +97,63 @@ double total_enthalpy(double specific_enthalpy, double mass)
 }
 
 /* Nitrous oxide vapour pressure, kPa */
-double nox_vp(double T_Kelvin)
+double nox_vp(double T_Celcius)
 {
-	T_Kelvin -= 273.15;
-	data_gather(Pfile, constP, headP);
-	data_gather(Tfile, constT, headT);
-	double pVap= data_grab("Pressure (psia)", T_Kelvin, "T", constT, headT);
-	
-	/*const float p[4] = { 1.0f, 1.5f, 2.5f, 5.0f };
-	const float b[4] = { -6.71893f, 1.35966f, -1.3779f, -4.051f };
-	double Tr = reduced_temperature(T_Kelvin);
-	float rab = 1.0 - Tr;
-	float shona = 0.0;
-	for (int dd = 0; dd < 4; dd++)
-		shona += b[dd] * pow(rab, p[dd]);
-	double  Pvap= (CRIT_PRES_NOS/KPa_TO_BAR) * exp((shona / Tr));
-	return(Pvap*KPa_TO_BAR); //should work without the conversions but I'm not sure so I'll leave converting through to bar*/
+	double pVap= data_grab("Pressure (psia)", T_Celcius, "T", constT, headT);
 	return(pVap);
 }
 /* Nitrous liquid Enthalpy (Latent heat) of vaporisation, J/kg */
-double nox_enthV(double T_Kelvin)
+double nox_enthV(double T_Celcius)
 {
-	T_Kelvin -= 273.15;
-	data_gather(Pfile, constP, headP);
-	data_gather(Tfile, constT, headT);
 	double Hvap = 0;
-	double hl = data_grab("Enthalpy (l, kJ/kg)", T_Kelvin, "T", constT, headT);//liquid enthalpy at 2
-	double hg = data_grab("Enthalpy (v, kJ/kg)",T_Kelvin, "T", constT, headT);//gas enthalpy at 2
-	
+	double hl = data_grab("Enthalpy (l, kJ/kg)", T_Celcius, "T", constT, headT);//liquid enthalpy at 2
+	double hg = data_grab("Enthalpy (v, kJ/kg)", T_Celcius, "T", constT, headT);//gas enthalpy at 2
 	Hvap = (hg - hl) * 1000;
-	/*
-	const float bL[5] = { -200.0f, 116.043f, -917.225f, 794.779f, -589.587f };
-	const float bV[5] = { -200.0f, 440.055f, -459.701f, 434.081f, -485.338f };
-	double shonaL, shonaV;
-	double Tr = reduced_temperature(T_Kelvin);
-		double rab;
-	rab = 1.0 - Tr;
-	shonaL = bL[0];
-	shonaV = bV[0];
-	for (int dd = 1; dd < 5; dd++)
-	{
-		shonaL += bL[dd] * pow(rab, (dd / 3.0));  saturated liquid enthalpy 
-		shonaV += bV[dd] * pow(rab, (dd / 3.0));  saturated vapour enthalpy 
-	}
-double Hvap = (shonaV - shonaL) * 1000.0;  net during change from liquid to vapour */
 	return(Hvap);
 }
 
-double nox_Lrho(double T_Kelvin)
+double nox_Lrho(double T_Celcius)
 {
-	T_Kelvin -= 273.15;
-	data_gather(Pfile, constP, headP);
-	data_gather(Tfile, constT, headT);
-
-	double rho = data_grab("Density (l, kg/m3)", T_Kelvin, "T", constT, headT);//NIST liquid density
-	/*const float b[4] = { 1.72328f, -0.8395f, 0.5106f, -0.10412f };
-	double Tr = reduced_temperature(T_Kelvin);
-	double rab = (1.0 / Tr) - 1.0;
-	double shona = 0.0;
-	for (int i = 0; i < 5; i++)
-		shona += b[i] * pow(rab, ((i + 1) / 3.0));
-	double rho = rhoCrit * exp(shona);*/
+	double rho = data_grab("Density (l, kg/m3)", T_Celcius, "T", constT, headT);//NIST liquid density
 	return(rho);
 }
 /* Nitrous oxide saturated vapour density, kg/m3 */
-double nox_Vrho(double T_Kelvin)
-{
-	T_Kelvin -= 273.15;
-	data_gather(Pfile, constP, headP);
-	data_gather(Tfile, constT, headT);
-	double rho=data_grab("Density (v, kg/m3)", T_Kelvin, "T", constT, headT);//NIST VAPOR density
-	/*const float b[5] = { -1.009f, -6.28792f, 7.50332f, -7.90463f, 0.629427f };
-	double Tr = reduced_temperature(T_Kelvin);
-	double rab = (1.0 / Tr) - 1.0;
-	double shona = 0.0;
-	for (int i = 0; i < 5; i++)
-		shona += b[i] * pow(rab, ((i + 1) / 3.0));
-	double rho = rhoCrit * exp(shona);*/
+double nox_Vrho(double T_Celcius)
+{	
+	double rho=data_grab("Density (v, kg/m3)", T_Celcius, "T", constT, headT);//NIST VAPOR density
 	return(rho);
 }
 
-double nox_Cp(double T_Kelvin)
+double nox_Cp(double T_Celcius)
 {
+	double Cp = data_grab("Cp (l, J/g*K)", T_Celcius, "T", constT, headT);
+	return(Cp);
+}
+
+double linInterp(double x1, double y1, double x2, double y2, double x) {
+	double y;
+	// Enter in two coordinates (x1,y1) and (x2,y2)
+	// as well as an x value that should be somewhere
+	// close or in between
+	if (x2 == x1) { //prevent division by zero
+			return y1;
+	}
+	else y = y1 + (x - x1)*(y2 - y1) / (x2 - x1);
+	return y;
+}
+
+void NoxPropertiesT(NIST_Table *props, double T_Kelvin){
 	T_Kelvin -= 273.15;
+	double T1 = ceil(T_Kelvin);
+	double T2 = floor(T_Kelvin);
+	props->Cp = linInterp(T1, nox_Cp(T1), T2, nox_Cp(T2), T_Kelvin);
+	props->enthV = linInterp(T1, nox_enthV(T1), T2, nox_enthV(T2), T_Kelvin);
+	props->Lrho = linInterp(T1, nox_Lrho(T1), T2, nox_Lrho(T2), T_Kelvin);
+	props->Vrho = linInterp(T1, nox_Vrho(T1), T2, nox_Vrho(T2), T_Kelvin);
+	props->pVap = linInterp(T1, nox_vp(T1), T2, nox_vp(T2), T_Kelvin);
+	return;
+}
+void setupTables() { 
 	data_gather(Pfile, constP, headP);
 	data_gather(Tfile, constT, headT);
-	double Cp = data_grab("Cp (l, J/g*K)", T_Kelvin, "T", constT, headT);
-	/*
-	const float b[5] = { 2.49973f, 0.023454f, -3.80136f, 13.0945f, -14.518f };
-	double Tr = reduced_temperature(T_Kelvin);
-	double rab = 1.0 - Tr;
-	double shona = 1.0 + b[1] / rab;
-	for (int i = 1; i < 4; i++)
-		shona += b[(i + 1)] * pow(rab, i);
-	double heatCapacity = b[0] * shona * 1000.0; convert from KJ to J */
-	return(Cp);
 }

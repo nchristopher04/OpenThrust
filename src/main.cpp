@@ -67,9 +67,10 @@ int main() {
 		cin >> Pc;
 		cout << "Input initial oxidizer mass in [kg]:  ";
 		cin >> oxyMass;
-		if (oxyMass > tankVolume*nox_Lrho(T_Kelvin)) {
+		setupTables();
+		if (oxyMass > tankVolume*nox_Lrho(Tt)) {
 			cout << "Density exceeds sat.Liquid density" << endl;
-			cout << "Max expected mass @ T: "<<(tankVolume*nox_Lrho(T_Kelvin))<<endl;
+			cout << "Max expected mass @ T: "<<(tankVolume*nox_Lrho(Tt))<<endl;
 			flag = 1;
 		}
 		else flag = 0;
@@ -133,7 +134,7 @@ int main() {
 		thrust[x] = At*(Pc*PSI_TO_PA)*Cf;
 		cout << "T+" << time[x] << " s =>>> Liquid Mass: " <<  liquidMass << "kg | Chamber Pressure: " <<  Pc << " psi | " << 
 			"Injector flow rate: " << mDotInjector << " kg/s | Tank Temperature" <<T_Kelvin<<" K"<< endl;
-		output(simFile,time[x], oxyMass, Pc, thrust[x], mDotInjector);//output to csv
+		output(simFile,time[x], oxyMass, Pc, thrust[x], mDotInjector,T_Kelvin);//output to csv
 		Tt = T_Kelvin - 273.15;
 		if (liquidMass <= 0.01) { cout << "Empty"; system("PAUSE"); };
 	}
@@ -194,15 +195,6 @@ void RPALookup(double Pc, double OF, double &k, double &R, double &Tc) {
 	k = CombustionProps.k_value;
 	R = CombustionProps.R_value;
 	Tc = CombustionProps.Chamber_Temperture;
-}
-
-double linInterp(double x1, double y1, double x2, double y2, double x) {
-	double y;
-	// Enter in two coordinates (x1,y1) and (x2,y2)
-	// as well as an x value that should be somewhere
-	// close or in between
-	y = y1 + (x - x1)*(y2 - y1) / (x2 - x1);
-	return y;
 }
 
 double bilinInterp(double x1, double x2, double y1, double y2,
