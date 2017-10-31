@@ -23,7 +23,7 @@ double Cf;								// Thrust coefficient []
 double Tt, T_Kelvin;					// NOS Tank Temperature
 //int PcRound10;						// Casts chamber pressure to integer
 double err;								// Used for calculating relative error
-double tankPressure;					// Tank absolute pressure [kPa]
+double tankPressure;					// Tank absolute pressure [psi]
 
 // Already defined
 double mDotNozzle, mDotInjector;		// Mass flow rates at the nozzle and the injector [kg/s]
@@ -74,14 +74,17 @@ int main()
 		cin >> Pc;
 		cout << "Input initial oxidizer mass in [kg]:  ";
 		cin >> oxyMass;
-		if (oxyMass > tankVolume*nox_Lrho(T_Kelvin)) {
+		setupTables();
+		if (oxyMass > tankVolume*nox_Lrho(Tt)) {
 			cout << "Density exceeds sat.Liquid density" << endl;
-			cout << "Max expected mass @ T: "<<(tankVolume*nox_Lrho(T_Kelvin))<<endl;
+			cout << "Max expected mass @ T: "<<(tankVolume*nox_Lrho(Tt))<<endl;
 			flag = 1;
 		}
 		else flag = 0;
 	}
-
+	liquidMass = oxyMass;//suppress errors from calc below
+	tankProps(0, tankVolume, oxyMass, vaporizedMass, liquidMass, T_Kelvin, tankPressure); //calc initial liquid mass and pressure
+	cout << "Initial liq Mass:"<<liquidMass;
 	for (int x = 0; x < 1000; x++) { //time steps
 		
 		// Finds all relevant values for thrust
@@ -120,25 +123,27 @@ int main()
 			cout << e.what() << '\n'; //catch exception, display to user and break loop
 			break;
 		}
+		double deltaM;
 		if (UserOptions.mIntegrationType == 1) { 
-			oxyMass -= mDotInjector*timeStep;
-			liquidMass = oxyMass; //assumes only liquid flow through injector
+			deltaM = mDotInjector*timeStep;
 		}
 		else if (UserOptions.mIntegrationType == 2) {
-			oxyMass -= 0.5 * timeStep * (3.0 * mDotInjector - mDotInjector_old);//addams integration
-			liquidMass = oxyMass;
+			deltaM= 0.5 * timeStep * (3.0 * mDotInjector - mDotInjector_old);//addams integration
 		}
+		oxyMass -= deltaM;
+		liquidMass -= deltaM; //assumes pure liquid through injector
 		mDotInjector_old = mDotInjector;
 
 		tankProps(timeStep,tankVolume,oxyMass,vaporizedMass,liquidMass,T_Kelvin,tankPressure); //update new Temperature and tank pressure
+		
 		// Creates outputs for each timestep
 		time[x] = x*timeStep;
 		thrust[x] = At*(Pc*PSI_TO_PA)*Cf;
-		cout << "T+" << time[x] << " s =>>> Oxy Mass: " <<  oxyMass << "kg | Chamber Pressure: " <<  Pc << " psi | " << 
+		cout << "T+" << time[x] << " s =>>> Liquid Mass: " <<  liquidMass << "kg | Chamber Pressure: " <<  Pc << " psi | " << 
 			"Injector flow rate: " << mDotInjector << " kg/s | Tank Temperature" <<T_Kelvin<<" K"<< endl;
-		output(simFile,time[x], oxyMass, Pc, thrust[x], mDotInjector);//output to csv
+		output(simFile,time[x], oxyMass, Pc, thrust[x], mDotInjector,T_Kelvin);//output to csv
 		Tt = T_Kelvin - 273.15;
-		if (oxyMass <= 0.01) { cout << "Empty"; system("PAUSE"); };
+		if (liquidMass <= 0.01) { cout << "Empty"; system("PAUSE"); };
 	}
 
 }
@@ -197,15 +202,6 @@ void RPALookup(double Pc, double OF, double &k, double &R, double &Tc) {
 	k = CombustionProps.k_value;
 	R = CombustionProps.R_value;
 	Tc = CombustionProps.Chamber_Temperture;
-}
-
-double linInterp(double x1, double y1, double x2, double y2, double x) {
-	double y;
-	// Enter in two coordinates (x1,y1) and (x2,y2)
-	// as well as an x value that should be somewhere
-	// close or in between
-	y = y1 + (x - x1)*(y2 - y1) / (x2 - x1);
-	return y;
 }
 
 double bilinInterp(double x1, double x2, double y1, double y2,
