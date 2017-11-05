@@ -2,7 +2,7 @@
 #include <cmath>
 #include <fstream>
 #include <stdexcept>
-#include "../include/RPA_to_struct.h"
+#include "../include/RpaTable.h"
 #include "../include/thermo_functions.h"
 #include "../include/injector_Model.h"
 #include "../include/main.h"
@@ -30,8 +30,7 @@ double mDotNozzle, mDotInjector;		// Mass flow rates at the nozzle and the injec
 double mDotInjector_old;				//Prev iteration mass flow rate
 double time[1000], thrust[1000];		// Output arrays that give thrust over time
 
-Look_Up_Table Table_Array = Create_Table_Array();
-Limits_Table Limits = Find_Limits(Table_Array);
+RpaTable RpaTableArray;
 
 
 
@@ -48,10 +47,16 @@ void output(ofstream& out, Arg&& arg, Args&&... args)
 
 int main() 
 {
+
+
+
+
 	// Creates parser object, sets its path, and reads the file
 	OptionFileParser UserOptions;
 	UserOptions.SetPath("./settings.cfg", ":");
 	UserOptions.ReadFile();
+	RpaTableArray.SetRpaDataFile("RPA_Output_Table.csv");
+	RpaTableArray.CreateRpaTable();
 
 	
 	double At = UserOptions.mThroatArea;
@@ -143,7 +148,7 @@ int main()
 			"Injector flow rate: " << mDotInjector << " kg/s | Tank Temperature" <<T_Kelvin<<" K"<< endl;
 		output(simFile,time[x], oxyMass, Pc, thrust[x], mDotInjector,T_Kelvin);//output to csv
 		Tt = T_Kelvin - 273.15;
-		if (liquidMass <= 0.01) { cout << "Empty"; system("PAUSE"); };
+		if (liquidMass <= 0.01) { cout << "Empty"; cin >> Cf;  return 1; };
 	}
 
 }
@@ -198,10 +203,10 @@ void RPALookup(double Pc, double OF, double &k, double &R, double &Tc) {
 	// Inputs in [psi], []
 	// No output but stores values in variables k, R, Tc
 	// Stored in [], [kJ/kg*K], [k]
-	RPA_Table CombustionProps = lookUp(Pc, OF, Table_Array, Limits);
-	k = CombustionProps.k_value;
-	R = CombustionProps.R_value;
-	Tc = CombustionProps.Chamber_Temperture;
+	RpaTable::RpaDataPoint CombustionProps = RpaTableArray.LookUpRpa(OF, Pc);
+	k = CombustionProps.KValue;
+	R = CombustionProps.RValue;
+	Tc = CombustionProps.ChamberTemperture;
 }
 
 double bilinInterp(double x1, double x2, double y1, double y2,
