@@ -117,14 +117,11 @@
     <ClCompile Include="libs\alglib\statistics.cpp" />
     <ClCompile Include="src\blowdownModel.cpp" />
     <ClCompile Include="src\cfg_file_reader.cpp" />
+    <ClCompile Include="src\SolomonModel.cpp" />
     <ClCompile Include="src\injector_Model.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\Nozzle_flow.cpp" />
     <ClCompile Include="src\RpaTable.cpp" />
-    <ClCompile Include="src\SolomonModel\Initiation.cpp" />
-    <ClCompile Include="src\SolomonModel\MassFlowRates.cpp" />
-    <ClCompile Include="src\SolomonModel\ModelLoop.cpp" />
-    <ClCompile Include="src\SolomonModel\ThermodynamicCalculations.cpp" />
     <ClCompile Include="src\thermo_functions.cpp" />
   </ItemGroup>
   <ItemGroup>

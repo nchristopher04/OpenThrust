@@ -5,6 +5,10 @@
 #include "../libs/alglib/interpolation.h"
 #include "../libs/alglib/solvers.h"
 #include "../include/injector_Model.h"
+#include "../include/main.h"
+
+#include <fstream>
+#include <algorithm>
 
 using namespace std;
 
@@ -95,7 +99,7 @@ SolomonModel::NistDataPoint SolomonModel::SetDataPoint(double oxTankTemperature,
 	// Inputs should be in [K] and [kg/m3]
 	if (oxTankTemperature < mMinTemperature || oxTankTemperature > mMaxTemperature)
 	{
-		throw(runtime_error("Temperature out of bounds"));
+		//throw(runtime_error("Temperature out of bounds"));
 	}
 
 	// Creates interpolation objects
@@ -147,7 +151,8 @@ SolomonModel::NistDataPoint SolomonModel::SetDataPoint(double oxTankTemperature,
 	else {
 		out.Quality = (out.VapDensity / effectiveDensity) * ((out.LiqDensity - effectiveDensity) / (out.LiqDensity - out.VapDensity));
 		out.FluidSpecificEntropy = out.VapEntropy * out.Quality + out.LiqEntropy * (1 - out.Quality);
-		out.FluidSpecificEnthalpy= out.VapEnthalpy * out.Quality + out.LiqEnthalpy * (1 - out.Quality);
+		out.FluidSpecificEnthalpy = out.VapEnthalpy * out.Quality + out.LiqEnthalpy * (1 - out.Quality);
+		out.FluidDensity = out.VapDensity * out.Quality + out.LiqDensity * (1 - out.Quality);
 		out.State = 1;
 	}
 	return out;
@@ -187,53 +192,125 @@ alglib::real_1d_array SolomonModel::pFunc(double temperature, double rho, double
 	return pressureQuality;
 }
 
-/*
-alglib::real_1d_array SolomonModel::FindTempRho(double tempGuess, double rhoGuess, alglib::real_1d_array (*func)(double, double, double, double))
+SolomonModel::NistDataPoint SolomonModel::MatchPressureQuality(double tempGuess, double rhoGuess, double pressureToMatch, double qualityToMatch)
 {
-double temperature, rho;
-double xnMinus2 = tempGuess - 10;
-double xnMinus1 = tempGuess;
-double xn, fnMinus1, fnMinus2;
-int maxIterations = 1000;
-int i = 0;
-double error = 100;
-while (error > 0.001) {
-fnMinus1 = func(xnMinus1, rhoGuess,
-i = i + 1;
-// Secant Method
-xn = xnMinus1 - fnMinus1*((xnMinus1 - xnMinus2) / (fnMinus1 - fnMinus2));
-xnMinus2 = xnMinus1;
-xnMinus1 = xn;
-error = (abs(xn - xnMinus1) / xn) * 100;
-if (i >= maxIterations) { throw(runtime_error("Can't converge")); break; }
-}
-temperature = xn;
+	double P = pressureToMatch;
+	double X = qualityToMatch;
+	double T = tempGuess;
+	double r = rhoGuess;
+	int k = 0;
+	double learnRate = 0.005;
+	double h = 0.001;
+	double tol = 0.001;
+	double relError = 100;
 
-xnMinus2 = rhoGuess + 25;
-xnMinus1 = rhoGuess;
-i = 0;
-error = 100;
-while (error > 0.001) {
-i = i + 1;
-// Secant Method
-xn = xnMinus1 - fnMinus1*((xnMinus1 - xnMinus2) / (fnMinus1 - fnMinus2));
-xnMinus2 = xnMinus1;
-xnMinus1 = xn;
-error = (abs(xn - xnMinus1) / xn) * 100;
-if (i >= maxIterations) { throw(runtime_error("Can't converge")); break; }
+	double TGrad, rGrad, rPrev, TPrev;
+
+	while (relError > tol)
+	{
+
+		rPrev = r;
+		TPrev = T;
+
+		k = k + 1;
+		if (k > 100000) { throw(runtime_error("PresusreQualityMatching: diverged")); break; }
+		//cout << k << endl;
+		//cout << relError << endl;
+		//if (T > mMaxTemperature) { throw(runtime_error("PresusreQualityMatching: high temperature")); break; }
+		//if (T < mMinTemperature) { throw(runtime_error("PresusreQualityMatching: low temperature")); break; }
+
+		TGrad = MatchPressureQualityError(T + h, r, P, X);
+		TGrad = TGrad - MatchPressureQualityError(T, r, P, X);
+		TGrad = TGrad / h;
+
+		rGrad = MatchPressureQualityError(T, r + h, P, X);
+		rGrad = rGrad - MatchPressureQualityError(T, r, P, X);
+		rGrad = rGrad / h;
+
+		T = T - learnRate * TGrad;
+		r = r - learnRate * rGrad;
+
+		relError = max(abs((r - rPrev) / r), abs((T - TPrev) / T));
+	}
+	NistDataPoint returnPoint = SetDataPoint(T, r);
+	return returnPoint;
+
 }
-}*/
+
+double SolomonModel::MatchPressureQualityError(double temperature, double rho, double pressure, double quality)
+{
+	NistDataPoint dataPnt = SetDataPoint(temperature, rho);
+	double error;
+	error = (pressure - dataPnt.Pressure)*(pressure - dataPnt.Pressure);
+	error = error + (quality - dataPnt.Quality)*(quality - dataPnt.Quality);
+	return error;
+}
+
+SolomonModel::NistDataPoint SolomonModel::MatchPressureEnthalpy(double tempGuess, double rhoGuess, double pressureToMatch, double enthalpyToMatch)
+{
+	double P = pressureToMatch;
+	double E = enthalpyToMatch;
+	double T = tempGuess;
+	double r = rhoGuess;
+	int k = 0;
+	double learnRate = 0.001;
+	double h = 0.001;
+	double tol = 0.01;
+	double relError = 100;
+
+	double TGrad, rGrad, rPrev, TPrev;
+
+	while (relError > tol)
+	{
+		TPrev = T;
+		rPrev = r;
+
+		k = k + 1;
+		if (k > 100000) { throw(runtime_error("PresusreQualityMatching: diverged")); break; }
+		//cout << k << endl;
+		//cout << relError << endl;
+		//if (T > mMaxTemperature) { throw(runtime_error("PresusreQualityMatching: high temperature")); break; }
+		//if (T < mMinTemperature) { throw(runtime_error("PresusreQualityMatching: low temperature")); break; }
+
+		TGrad = MatchPressureEnthalpyError(T + h, r, P, E);
+		TGrad = TGrad - MatchPressureEnthalpyError(T, r, P, E);
+		TGrad = TGrad / h;
+
+		rGrad = MatchPressureEnthalpyError(T, r + h, P, E);
+		rGrad = rGrad - MatchPressureEnthalpyError(T, r, P, E);
+		rGrad = rGrad / h;
+
+		T = T - learnRate * TGrad;
+		r = r - learnRate * rGrad;
+
+		relError = max(abs((r - rPrev) / r),abs((T-TPrev)/T));
+	}
+	NistDataPoint returnPoint = SetDataPoint(T, r);
+	return returnPoint;
+
+}
+
+double SolomonModel::MatchPressureEnthalpyError(double temperature, double rho, double pressure, double enthalpy)
+{
+	NistDataPoint dataPnt = SetDataPoint(temperature, rho);
+	double error;
+	error = (pressure - dataPnt.Pressure)*(pressure - dataPnt.Pressure);
+	error = error + (enthalpy - dataPnt.FluidSpecificEnthalpy)*(enthalpy - dataPnt.FluidSpecificEnthalpy);
+	return error;
+}
 
 void SolomonModel::TimeStepLoop()
 {
 	// Volume, initial ox mass, and initial tank temperature should be set using SetInitialProperties
 	// This will also set initial density
-
+	ofstream file;
+	remove("output.csv");
+	file.open("output.csv", ios::out | ios::trunc);
 	double tempGuess, rhoGuess, tankPv;
 	NistDataPoint NosTableValues = SetDataPoint(mNosTemperature, mFluidDensity);
 	NistDataPoint Upstream, Downstream;
 	double Cd = 0.8;
-	double Ac = 2.8274333882310001e-05;
+	double Ac = 0.000028274333882310001;
 
 	mUpstreamPressure = NosTableValues.Pressure;
 	mLiqDensity = NosTableValues.LiqDensity;
@@ -259,87 +336,80 @@ void SolomonModel::TimeStepLoop()
 	alglib::real_2d_array SimState;
 	SimState.setlength(1000, 12);
 	SetNewState(0, time, mass, rho, temp, tankP, quality, h, totH, mDot, outP, st, SimState);
+	file << "time" << "," << "mass" << "," << "rho" << "," << "temp" << "," << "tankP" << "," << "quality" << "," << "h" << ","
+		<< "totH" << "," << "mDot" << "," << "outP" << "," << "st" << "," << "mdot_HEM" << "," << "mdot_inc" << "," << "thrust" << endl;
 
 	for (int i = 1; i < 1000; i++) {
 		if (mFluidMass <= 0) { return; }
 
-		/*	guess=[300 300]; %[T,rho]
-		pFunc = @(v) [getfield(CO2Props(v(1),v(2)),'P')-P1; getfield(CO2Props(v(1),v(2)),'X') - X1];
-		v1 = lsqnonlin(pFunc,guess,0,inf,optimset('Display','off','TolFun',1e-14));
-		temp = v1(1); rho = v1(2); */
-		/////////////////////////////////////////////////////////////
-		alglib::spline1dinterpolant pressureSpline;
-		alglib::real_1d_array pressures;
-		pressures.setlength(mNistTableLength);
-		alglib::spline1dinterpolant qualitySpline;
-		alglib::real_1d_array qualities;
-		qualities.setlength(mNistTableLength);
-		for (int i = 0; i < mNistTableLength; i++)
-		{
-			pressures[i] = SetDataPoint(NIST.Temperature[i], rho).Pressure;
-		}
-		alglib::spline1dbuildcubic(pressures, NIST.Temperature, pressureSpline);
-		temp = alglib::spline1dcalc(pressureSpline, tankP);
-		for (int i = 0; i < mNistTableLength; i++)
-		{
-			qualities[i] = SetDataPoint(NIST.Temperature[i], rho).Quality;
-		}
-		/////////////////////////////////////////////////////////////
-
-		Upstream = SetDataPoint(temp, rho);
+		Upstream = MatchPressureQuality(temp, rho, tankP, quality);
+		temp = Upstream.Temperature;
+		rho = Upstream.FluidDensity;
 		tankPv = Upstream.Pressure;
 		double rhoL1 = Upstream.LiqDensity;
 		h = Upstream.FluidSpecificEnthalpy;
 		totH = mass*h;
 
 
-		/*
-		guess=[300 300]; %[T,rho]
-		pFunc = @(v) [getfield(CO2Props(v(1),v(2)),'P')-P2, getfield(CO2Props(v(1),v(2)),'h')-h1];
-		v2 = lsqnonlin(pFunc,guess,0,inf,optimset('Display','off','TolFun',1e-14));
-		T2 = v2(1); rho2 = v2(2);
-		*/
-		//Downstream=SetDataPoint(T2,rho2);
-		outP = Downstream.Pressure;
+
+		Downstream = MatchPressureEnthalpy(300, 300, outP, h);
+
+		//outP = Downstream.Pressure;
 		double h2 = Downstream.FluidSpecificEnthalpy;
+		double rho2 = Downstream.FluidDensity;
 
+		double kinjector = sqrt((tankP - outP) / (tankPv - outP));
+		double W = (1 / (kinjector + 1));
+		double mdot_inc = Ac*sqrt(2 * rhoL1*abs(tankP - outP)*6894.76);
+		double mdot_HEM = rho2*Ac*sqrt(2*abs(h-h2));
+		mDot = Cd*((1-W)*mdot_inc + W*mdot_HEM);
 
-		double k = sqrt((tankP - outP) / (tankPv - outP));
-		double W = (1 / (k + 1));
-		double mdot_inc = Ac*sqrt(2 * rhoL1*(tankP - outP)*1e6);
-		//double mdot_HEM = rho2*Ac*sqrt(2*(h-h2));
-		//mDot = Cd*((1-W)*mdot_inc + W*mdot_HEM);
+		///////////////////////
+		//mDot = mdot_HEM;
+		double k, R, Tc, Cf;
+		double OF = 2.1;
+		double nozzleThroatArea = 0.000382646;
+		double nozzleExitArea = 0.00181001;
+		interpRPAValues(outP, OF, k, R, Tc);
+		double mDotNoz = mDot*((1 + OF) / OF);
+		double outP = (mDotNoz*sqrt(k*R*Tc)) / (nozzleThroatArea * k * sqrt(pow((2 / (k + 1)), ((k + 1) / (k - 1)))));
+		outP = outP / (6894.76);
+		Cf = thrustCoefficient(14.7, nozzleExitArea, outP, nozzleThroatArea);
+		double thrust = nozzleThroatArea*(outP*6894.76)*Cf;
+		///////////////////////
 
-		mDot = injectorModel(temp, outP);
 		mass = mass - mDot*mTimeStep;
 		totH = totH - h*mTimeStep*mDot;
 		rho = mass / mOxTankVolume;
 		h = totH / mass;
 
-		/*
-		pFunc = @(T_Unknown) getfield(CO2Props(T_Unknown,rho),'h')-h1;
-		temp = lsqnonlin(pFunc,300,0,inf,optimset('Display','off','TolFun',1e-14));
-		|
-		V
-		*/
 		alglib::spline1dinterpolant enthSpline;
 		alglib::real_1d_array enthalpies;
+		alglib::real_1d_array temperatures;
+		temperatures.setlength(mNistTableLength);
 		enthalpies.setlength(mNistTableLength);
 		for (int i = 0; i < mNistTableLength; i++)
 		{
 			enthalpies[i] = SetDataPoint(NIST.Temperature[i], rho).FluidSpecificEnthalpy;
+			temperatures[i] = NIST.Temperature[i];
 		}
-		alglib::spline1dbuildcubic(enthalpies, NIST.Temperature, enthSpline);
-		alglib::spline1dcalc(enthSpline, h);
-
-		Downstream = SetDataPoint(temp, rho);
-		tankP = Downstream.Pressure;
-		quality = Downstream.Quality;
-		st = Downstream.State;
+		try {
+			alglib::spline1dbuildcubic(enthalpies, temperatures, enthSpline);
+			temp = alglib::spline1dcalc(enthSpline, h);
+		}
+		catch (alglib::ap_error& e)
+		{ 
+			break; 
+		}
+		Upstream = SetDataPoint(temp, rho);
+		tankP = Upstream.Pressure;
+		quality = Upstream.Quality;
+		st = Upstream.State;
 
 		time = time + mTimeStep;
 		SetNewState(i, time, mass, rho, temp, tankP, quality, h, totH, mDot, outP, st, SimState);
-
+		file << time << "," << mass << "," << rho << "," << temp << "," << tankP << "," << quality << "," << h << ","
+			<< totH << "," << mDot << "," << outP << "," << st << "," << mdot_HEM << "," << mdot_inc << "," << thrust << endl;	
 	}
 
 

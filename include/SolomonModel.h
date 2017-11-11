@@ -113,14 +113,17 @@ public:
 	void SetInitialProperties(double initialOxTankVolume, double initialMassOxidizer, double initialTemperature, double timeStep);
 	void SetNosDataFile(const char* temperatureIncrementedFile);
 	void ImportNosData();
-	NistDataPoint SetDataPoint(double oxTankTemperature, double effectiveDensity);
+	void TimeStepLoop();
 
+private:
+	NistDataPoint SetDataPoint(double oxTankTemperature, double effectiveDensity);
 	void SetNewState(int i, double time, double mass, double rho, double temp, double tankP,
 		double quality, double h, double totH, double mDot, double outP, double st, alglib::real_2d_array &SimState);
 	alglib::real_1d_array pFunc(double mass, double rho, double P1, double X1);
-	alglib::real_1d_array SolomonModel::FindTempRho(double, double, alglib::real_1d_array(*func)(double, double, double, double));
-	void TimeStepLoop();
-
+	SolomonModel::NistDataPoint SolomonModel::MatchPressureQuality(double tempGuess, double rhoGuess, double pressureToMatch, double qualityToMatch);
+	double SolomonModel::MatchPressureQualityError(double temperature, double rho, double pressure, double quality);
+	SolomonModel::NistDataPoint SolomonModel::MatchPressureEnthalpy(double tempGuess, double rhoGuess, double pressureToMatch, double enthalpyToMatch);
+	double SolomonModel::MatchPressureEnthalpyError(double temperature, double rho, double pressure, double enthalpy);
 
 };
 #endif // !SOLOMON_MODEL_H

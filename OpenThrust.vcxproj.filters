@@ -19,9 +19,6 @@
     <Filter Include="Source Files\alglib">
       <UniqueIdentifier>{f3305cd3-f346-47a2-a7cb-ff7f757876a1}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\SolomonModel">
-      <UniqueIdentifier>{9d216c20-0dee-4319-a7cb-6260ffaa3a95}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\blowdownModel.cpp">
@@ -81,19 +78,10 @@
     <ClCompile Include="libs\alglib\statistics.cpp">
       <Filter>Source Files\alglib</Filter>
     </ClCompile>
-    <ClCompile Include="src\SolomonModel\MassFlowRates.cpp">
-      <Filter>Source Files\SolomonModel</Filter>
-    </ClCompile>
-    <ClCompile Include="src\SolomonModel\Initiation.cpp">
-      <Filter>Source Files\SolomonModel</Filter>
-    </ClCompile>
-    <ClCompile Include="src\SolomonModel\ModelLoop.cpp">
-      <Filter>Source Files\SolomonModel</Filter>
-    </ClCompile>
-    <ClCompile Include="src\SolomonModel\ThermodynamicCalculations.cpp">
-      <Filter>Source Files\SolomonModel</Filter>
-    </ClCompile>
     <ClCompile Include="src\RpaTable.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\SolomonModel.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

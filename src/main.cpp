@@ -8,6 +8,7 @@
 #include "../include/main.h"
 #include "../include/blowdownModel.h"
 #include "../include/cfg_file_reader.h"
+#include "../include/SolomonModel.h"
 
 using namespace std;
 
@@ -47,8 +48,7 @@ void output(ofstream& out, Arg&& arg, Args&&... args)
 
 int main() 
 {
-
-
+	
 
 
 	// Creates parser object, sets its path, and reads the file
@@ -58,12 +58,14 @@ int main()
 	RpaTableArray.SetRpaDataFile("RPA_Output_Table.csv");
 	RpaTableArray.CreateRpaTable();
 
-	
+	bool SolomonModelFlag = UserOptions.mSolomonFlag;
 	double At = UserOptions.mThroatArea;
 	double A2 = UserOptions.mExitArea;
 	double tankVolume = UserOptions.mOxTankVolume;
 	double timeStep = UserOptions.mTimeStep;
 	double OF = UserOptions.mOxFuelRatio;
+
+
 
 	
 	double liquidMass, vaporizedMass=0;
@@ -87,6 +89,24 @@ int main()
 		}
 		else flag = 0;
 	}
+
+
+	////////////////////	
+	if (SolomonModelFlag) {
+		simFile.close();
+		SolomonModel model;
+		model.SetInitialProperties(tankVolume, oxyMass, Tt, timeStep);
+		model.SetNosDataFile("N20_Neg30_35T.txt");
+		model.ImportNosData();
+		model.TimeStepLoop();
+		cout << "Done!";
+		cin >> SolomonModelFlag;
+		return 1;
+	}
+	///////////////////
+
+
+
 	liquidMass = oxyMass;//suppress errors from calc below
 	tankProps(0, tankVolume, oxyMass, vaporizedMass, liquidMass, T_Kelvin, tankPressure); //calc initial liquid mass and pressure
 	cout << "Initial liq Mass:"<<liquidMass;
