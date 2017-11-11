@@ -98,7 +98,7 @@ int main()
 					PcNew = calcPc(At, mDotNozzle, k, R, Tc);
 					err = abs(100 * (PcOld - PcNew) / PcOld);
 					PcOld = (PcNew-PcOld)*UserOptions.mConvergenceWeight+PcOld;
-					if (err < 5) { Pc = PcNew; err = 100; break; }
+					if (err < 4) { Pc = PcNew; err = 100; break; }
 					else if (i == 99) { throw runtime_error("PressureCalculatorDiverged"); }
 				}
 			}
@@ -276,7 +276,8 @@ double interpInjectorModel(double Tt, double Pc) {
 		mDot2 = injectorModel(Tt1, Pc2);
 		mDot3 = injectorModel(Tt2, Pc1);
 		mDot4 = injectorModel(Tt2, Pc2);
-		mDotInjector = bilinInterp(Tt1, Tt2, Pc1, Pc2, mDot1, mDot2, mDot3, mDot4, Tt, Pc);
+		mDotInjector=linInterp(Pc1, linInterp(Tt1, mDot1, Tt2, mDot3, Tt), Pc2, linInterp(Tt1, mDot2, Tt2, mDot4, Tt), Pc);
+		//mDotInjector = bilinInterp(Tt1, Tt2, Pc1, Pc2, mDot1, mDot2, mDot3, mDot4, Tt, Pc);
 	}
 	else if (Tt1 != Tt2) {
 		mDot1 = injectorModel(Tt1, Pc);

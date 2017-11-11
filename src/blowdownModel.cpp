@@ -30,7 +30,6 @@ void tankProps(double timeStep, double tankVolume, double oxyMass, double &vapor
 		T_Kelvin = 309.15;
 		blowdownModel.tempFault = 'H';
 	}
-	cout << NoxTable.enthV;
 	deltaQ = vaporizedMass_prev*NoxTable.enthV;
 	T_Kelvin -= (deltaQ / (liquidMass_prev * NoxTable.Cp*1000));  // define a heat capacity for the whole system
 
