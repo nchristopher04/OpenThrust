@@ -70,7 +70,7 @@ int main()
 	
 	double liquidMass, vaporizedMass=0;
 	ofstream simFile("output.csv");
-	simFile << "Time (s), Liquid Mass (kg)  ,  Chamber Pressure (PSI), Thrust (N), Mass Flow Rate (kg/s)" << '\n'; //setup basic output format
+	simFile << "Time (s), Modeled Liquid Mass  ,  Modeled Chamber Pressure, Modeled Thrust, Modeled Tank Pressure" << '\n'; //setup basic output format
 	cout << "Input initial params." << endl;
 	bool flag = 1;
 	while (flag == 1) {
@@ -166,9 +166,9 @@ int main()
 		thrust[x] = At*(Pc*PSI_TO_PA)*Cf;
 		cout << "T+" << time[x] << " s =>>> Liquid Mass: " <<  liquidMass << "kg | Chamber Pressure: " <<  Pc << " psi | " << 
 			"Injector flow rate: " << mDotInjector << " kg/s | Tank Temperature" <<T_Kelvin<<" K"<< endl;
-		output(simFile,time[x], oxyMass, Pc, thrust[x], mDotInjector,T_Kelvin);//output to csv
+		output(simFile,time[x], liquidMass, Pc, thrust[x],tankPressure);//output to csv
 		Tt = T_Kelvin - 273.15;
-		if (liquidMass <= 0.01) { cout << "Empty"; cin >> Cf;  return 1; };
+		if (liquidMass <= 0.05) { cout << "Empty"; simFile.close(); return 1; };
 	}
 
 }
