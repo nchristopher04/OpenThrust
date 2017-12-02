@@ -42,6 +42,7 @@ void OptionFileParser::ReadFile()
 	mThroatArea = mRocketValues["throatArea"];
 	mExitArea = mRocketValues["exitArea"];
 	mOxFuelRatio = mRocketValues["OF"];
+	mSolomonFlag = mRocketValues["solomonMode"];
 			
 	// To get the integer values from a double, they are rounded to nearest
 	// integer value as floating point number (round()), 0.1 is added to ensure 

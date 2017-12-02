@@ -102,12 +102,26 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="libs\alglib\alglibinternal.cpp" />
+    <ClCompile Include="libs\alglib\alglibmisc.cpp" />
+    <ClCompile Include="libs\alglib\ap.cpp" />
+    <ClCompile Include="libs\alglib\dataanalysis.cpp" />
+    <ClCompile Include="libs\alglib\diffequations.cpp" />
+    <ClCompile Include="libs\alglib\fasttransforms.cpp" />
+    <ClCompile Include="libs\alglib\integration.cpp" />
+    <ClCompile Include="libs\alglib\interpolation.cpp" />
+    <ClCompile Include="libs\alglib\linalg.cpp" />
+    <ClCompile Include="libs\alglib\optimization.cpp" />
+    <ClCompile Include="libs\alglib\solvers.cpp" />
+    <ClCompile Include="libs\alglib\specialfunctions.cpp" />
+    <ClCompile Include="libs\alglib\statistics.cpp" />
     <ClCompile Include="src\blowdownModel.cpp" />
     <ClCompile Include="src\cfg_file_reader.cpp" />
+    <ClCompile Include="src\SolomonModel.cpp" />
     <ClCompile Include="src\injector_Model.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\Nozzle_flow.cpp" />
-    <ClCompile Include="src\RPA_to_struct.cpp" />
+    <ClCompile Include="src\RpaTable.cpp" />
     <ClCompile Include="src\thermo_functions.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -115,8 +129,23 @@
     <ClInclude Include="include\cfg_file_reader.h" />
     <ClInclude Include="include\injector_Model.h" />
     <ClInclude Include="include\main.h" />
-    <ClInclude Include="include\RPA_to_struct.h" />
+    <ClInclude Include="include\RpaTable.h" />
+    <ClInclude Include="include\SolomonModel.h" />
     <ClInclude Include="include\thermo_functions.h" />
+    <ClInclude Include="libs\alglib\alglibinternal.h" />
+    <ClInclude Include="libs\alglib\alglibmisc.h" />
+    <ClInclude Include="libs\alglib\ap.h" />
+    <ClInclude Include="libs\alglib\dataanalysis.h" />
+    <ClInclude Include="libs\alglib\diffequations.h" />
+    <ClInclude Include="libs\alglib\fasttransforms.h" />
+    <ClInclude Include="libs\alglib\integration.h" />
+    <ClInclude Include="libs\alglib\interpolation.h" />
+    <ClInclude Include="libs\alglib\linalg.h" />
+    <ClInclude Include="libs\alglib\optimization.h" />
+    <ClInclude Include="libs\alglib\solvers.h" />
+    <ClInclude Include="libs\alglib\specialfunctions.h" />
+    <ClInclude Include="libs\alglib\statistics.h" />
+    <ClInclude Include="libs\alglib\stdafx.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

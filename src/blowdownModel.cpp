@@ -45,7 +45,7 @@ void tankProps(double timeStep, double tankVolume, double oxyMass, double &vapor
 		cout << "VaporFault"<< endl;
 		system("Pause");
 	}
-	lagged = (0.01) * (vaporizedMass - lagged) + lagged; // 1st-order lag 
+	lagged = (0.005) * (vaporizedMass - lagged) + lagged; // 1st-order lag 
 	vaporizedMass_prev = lagged; //to be used in next iteration
 	liquidMass_prev = liquidMass; //set liquidmass_old for next iteration to current, get pushed outside of this function to main iterator
 	}

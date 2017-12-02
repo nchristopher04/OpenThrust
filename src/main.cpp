@@ -2,12 +2,13 @@
 #include <cmath>
 #include <fstream>
 #include <stdexcept>
-#include "../include/RPA_to_struct.h"
+#include "../include/RpaTable.h"
 #include "../include/thermo_functions.h"
 #include "../include/injector_Model.h"
 #include "../include/main.h"
 #include "../include/blowdownModel.h"
 #include "../include/cfg_file_reader.h"
+#include "../include/SolomonModel.h"
 
 using namespace std;
 
@@ -30,8 +31,7 @@ double mDotNozzle, mDotInjector;		// Mass flow rates at the nozzle and the injec
 double mDotInjector_old;				//Prev iteration mass flow rate
 double time[1000], thrust[1000];		// Output arrays that give thrust over time
 
-Look_Up_Table Table_Array = Create_Table_Array();
-Limits_Table Limits = Find_Limits(Table_Array);
+RpaTable RpaTableArray;
 
 
 
@@ -48,22 +48,29 @@ void output(ofstream& out, Arg&& arg, Args&&... args)
 
 int main() 
 {
+	
+
+
 	// Creates parser object, sets its path, and reads the file
 	OptionFileParser UserOptions;
 	UserOptions.SetPath("./settings.cfg", ":");
 	UserOptions.ReadFile();
+	RpaTableArray.SetRpaDataFile("RPA_Output_Table.csv");
+	RpaTableArray.CreateRpaTable();
 
-	
+	bool SolomonModelFlag = UserOptions.mSolomonFlag;
 	double At = UserOptions.mThroatArea;
 	double A2 = UserOptions.mExitArea;
 	double tankVolume = UserOptions.mOxTankVolume;
 	double timeStep = UserOptions.mTimeStep;
 	double OF = UserOptions.mOxFuelRatio;
 
+
+
 	
 	double liquidMass, vaporizedMass=0;
 	ofstream simFile("output.csv");
-	simFile << "Time (s), Liquid Mass (kg)  ,  Chamber Pressure (PSI), Thrust (N), Mass Flow Rate (kg/s)" << '\n'; //setup basic output format
+	simFile << "Time (s), Modeled Liquid Mass  ,  Modeled Chamber Pressure, Modeled Thrust, Modeled Tank Pressure" << '\n'; //setup basic output format
 	cout << "Input initial params." << endl;
 	bool flag = 1;
 	while (flag == 1) {
@@ -82,6 +89,24 @@ int main()
 		}
 		else flag = 0;
 	}
+
+
+	////////////////////	
+	if (SolomonModelFlag) {
+		simFile.close();
+		SolomonModel model;
+		model.SetInitialProperties(tankVolume, oxyMass, Tt, timeStep);
+		model.SetNosDataFile("N20_Neg30_35T.txt");
+		model.ImportNosData();
+		model.TimeStepLoop();
+		cout << "Done!";
+		cin >> SolomonModelFlag;
+		return 1;
+	}
+	///////////////////
+
+
+
 	liquidMass = oxyMass;//suppress errors from calc below
 	tankProps(0, tankVolume, oxyMass, vaporizedMass, liquidMass, T_Kelvin, tankPressure); //calc initial liquid mass and pressure
 	cout << "Initial liq Mass:"<<liquidMass;
@@ -142,9 +167,10 @@ int main()
 		ISP+= (thrust[x] / (9.81*mDotNozzle));
 		cout << "T+" << time[x] << " s =>>> Liquid Mass: " <<  liquidMass << "kg | Chamber Pressure: " <<  Pc << " psi | " << 
 			"Injector flow rate: " << mDotInjector << " kg/s | Tank Temperature" <<T_Kelvin<<" K"<< endl;
-		output(simFile,time[x], oxyMass, Pc, thrust[x], mDotInjector,T_Kelvin);//output to csv
+		output(simFile,time[x], liquidMass, Pc, thrust[x],tankPressure);//output to csv
 		Tt = T_Kelvin - 273.15;
-		if (liquidMass <= 0.01) { cout << "Empty, " << "Avg ISP: " << (ISP / x); system("PAUSE"); };
+		if (liquidMass <= 0.05) { cout << "Empty"; simFile.close(); return 1; };
+
 	}
 
 }
@@ -199,10 +225,10 @@ void RPALookup(double Pc, double OF, double &k, double &R, double &Tc) {
 	// Inputs in [psi], []
 	// No output but stores values in variables k, R, Tc
 	// Stored in [], [kJ/kg*K], [k]
-	RPA_Table CombustionProps = lookUp(Pc, OF, Table_Array, Limits);
-	k = CombustionProps.k_value;
-	R = CombustionProps.R_value;
-	Tc = CombustionProps.Chamber_Temperture;
+	RpaTable::RpaDataPoint CombustionProps = RpaTableArray.LookUpRpa(OF, Pc);
+	k = CombustionProps.KValue;
+	R = CombustionProps.RValue;
+	Tc = CombustionProps.ChamberTemperture;
 }
 
 double bilinInterp(double x1, double x2, double y1, double y2,

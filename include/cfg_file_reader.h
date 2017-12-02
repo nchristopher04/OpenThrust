@@ -26,6 +26,7 @@ class OptionFileParser
 		double mOxFuelRatio;
 		int mFlowModel;
 		int mIntegrationType;
+		bool mSolomonFlag;
 
 
 		// Methods
