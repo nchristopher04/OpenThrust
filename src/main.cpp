@@ -25,7 +25,7 @@ double Tt, T_Kelvin;					// NOS Tank Temperature
 //int PcRound10;						// Casts chamber pressure to integer
 double err;								// Used for calculating relative error
 double tankPressure;					// Tank absolute pressure [psi]
-
+double ISP;
 // Already defined
 double mDotNozzle, mDotInjector;		// Mass flow rates at the nozzle and the injector [kg/s]
 double mDotInjector_old;				//Prev iteration mass flow rate
@@ -123,7 +123,7 @@ int main()
 					PcNew = calcPc(At, mDotNozzle, k, R, Tc);
 					err = abs(100 * (PcOld - PcNew) / PcOld);
 					PcOld = (PcNew-PcOld)*UserOptions.mConvergenceWeight+PcOld;
-					if (err < 5) { Pc = PcNew; err = 100; break; }
+					if (err < 4) { Pc = PcNew; err = 100; break; }
 					else if (i == 99) { throw runtime_error("PressureCalculatorDiverged"); }
 				}
 			}
@@ -164,11 +164,13 @@ int main()
 		// Creates outputs for each timestep
 		time[x] = x*timeStep;
 		thrust[x] = At*(Pc*PSI_TO_PA)*Cf;
+		ISP+= (thrust[x] / (9.81*mDotNozzle));
 		cout << "T+" << time[x] << " s =>>> Liquid Mass: " <<  liquidMass << "kg | Chamber Pressure: " <<  Pc << " psi | " << 
 			"Injector flow rate: " << mDotInjector << " kg/s | Tank Temperature" <<T_Kelvin<<" K"<< endl;
 		output(simFile,time[x], liquidMass, Pc, thrust[x],tankPressure);//output to csv
 		Tt = T_Kelvin - 273.15;
 		if (liquidMass <= 0.05) { cout << "Empty"; simFile.close(); return 1; };
+
 	}
 
 }
@@ -301,7 +303,8 @@ double interpInjectorModel(double Tt, double Pc) {
 		mDot2 = injectorModel(Tt1, Pc2);
 		mDot3 = injectorModel(Tt2, Pc1);
 		mDot4 = injectorModel(Tt2, Pc2);
-		mDotInjector = bilinInterp(Tt1, Tt2, Pc1, Pc2, mDot1, mDot2, mDot3, mDot4, Tt, Pc);
+		mDotInjector=linInterp(Pc1, linInterp(Tt1, mDot1, Tt2, mDot3, Tt), Pc2, linInterp(Tt1, mDot2, Tt2, mDot4, Tt), Pc);
+		//mDotInjector = bilinInterp(Tt1, Tt2, Pc1, Pc2, mDot1, mDot2, mDot3, mDot4, Tt, Pc);
 	}
 	else if (Tt1 != Tt2) {
 		mDot1 = injectorModel(Tt1, Pc);
