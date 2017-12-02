@@ -40,9 +40,9 @@ void tankProps(double timeStep, double tankVolume, double oxyMass, double &vapor
 	liquidMass = (1-NoxTable.Quality)*oxyMass;
 	vaporMass = oxyMass - liquidMass;
 	vaporizedMass = liquidMass_prev - liquidMass;
-	if (vaporizedMass < 0 || NoxTable.Quality<0|| NoxTable.Quality>1 || vaporizedMass>oxyMass) {
+	if ( NoxTable.Quality<0|| NoxTable.Quality>1 || vaporizedMass>oxyMass) {
 		blowdownModel.vaporFault = true;
-		cout << "VaporFault" << blowdownModel.vaporFault << endl;
+		cout << "VaporFault"<< endl;
 		system("Pause");
 	}
 	lagged = (0.01) * (vaporizedMass - lagged) + lagged; // 1st-order lag 

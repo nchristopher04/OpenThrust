@@ -24,7 +24,7 @@ double Tt, T_Kelvin;					// NOS Tank Temperature
 //int PcRound10;						// Casts chamber pressure to integer
 double err;								// Used for calculating relative error
 double tankPressure;					// Tank absolute pressure [psi]
-
+double ISP;
 // Already defined
 double mDotNozzle, mDotInjector;		// Mass flow rates at the nozzle and the injector [kg/s]
 double mDotInjector_old;				//Prev iteration mass flow rate
@@ -139,11 +139,12 @@ int main()
 		// Creates outputs for each timestep
 		time[x] = x*timeStep;
 		thrust[x] = At*(Pc*PSI_TO_PA)*Cf;
+		ISP+= (thrust[x] / (9.81*mDotNozzle));
 		cout << "T+" << time[x] << " s =>>> Liquid Mass: " <<  liquidMass << "kg | Chamber Pressure: " <<  Pc << " psi | " << 
 			"Injector flow rate: " << mDotInjector << " kg/s | Tank Temperature" <<T_Kelvin<<" K"<< endl;
 		output(simFile,time[x], oxyMass, Pc, thrust[x], mDotInjector,T_Kelvin);//output to csv
 		Tt = T_Kelvin - 273.15;
-		if (liquidMass <= 0.01) { cout << "Empty"; system("PAUSE"); };
+		if (liquidMass <= 0.01) { cout << "Empty, " << "Avg ISP: " << (ISP / x); system("PAUSE"); };
 	}
 
 }
