@@ -33,7 +33,7 @@ double time[1000], thrust[1000];		// Output arrays that give thrust over time
 
 RpaTable RpaTableArray;
 
-
+void thrustRamp(int dir, double Ramp, double FitThrust, double timestep, int x, ofstream &simfile);
 
 template <typename Arg, typename... Args>
 void output(ofstream& out, Arg&& arg, Args&&... args)
@@ -48,15 +48,14 @@ void output(ofstream& out, Arg&& arg, Args&&... args)
 
 int main() 
 {
-	
-
-
-	// Creates parser object, sets its path, and reads the file
 	OptionFileParser UserOptions;
+	// Creates parser object, sets its path, and reads the file
+
 	UserOptions.SetPath("./settings.cfg", ":");
 	UserOptions.ReadFile();
 	RpaTableArray.SetRpaDataFile("RPA_Output_Table.csv");
 	RpaTableArray.CreateRpaTable();
+
 
 	bool SolomonModelFlag = UserOptions.mSolomonFlag;
 	double At = UserOptions.mThroatArea;
@@ -64,9 +63,8 @@ int main()
 	double tankVolume = UserOptions.mOxTankVolume;
 	double timeStep = UserOptions.mTimeStep;
 	double OF = UserOptions.mOxFuelRatio;
-
-
-
+	double RampDownTime = UserOptions.RampDownTime;
+	double RampUpTime = UserOptions.RampUpTime;
 	
 	double liquidMass, vaporizedMass=0;
 	ofstream simFile("output.csv");
@@ -164,12 +162,13 @@ int main()
 		// Creates outputs for each timestep
 		time[x] = x*timeStep;
 		thrust[x] = At*(Pc*PSI_TO_PA)*Cf;
-		ISP+= (thrust[x] / (9.81*mDotNozzle));
-		cout << "T+" << time[x] << " s =>>> Liquid Mass: " <<  liquidMass << "kg | Chamber Pressure: " <<  Pc << " psi | " << 
-			"Injector flow rate: " << mDotInjector << " kg/s | Tank Temperature" <<T_Kelvin<<" K"<< endl;
-		output(simFile,time[x], liquidMass, Pc, thrust[x],tankPressure);//output to csv
+		if (x == 1) { thrustRamp(1,RampUpTime, thrust[x], timeStep, x, simFile); }
+		ISP += (thrust[x] / (9.81*mDotNozzle));
+		cout << "T+" << time[x] << " s =>>> Liquid Mass: " << liquidMass << "kg | Chamber Pressure: " << Pc << " psi | " <<
+			"Injector flow rate: " << mDotInjector << " kg/s | Tank Temperature" << T_Kelvin << " K" << endl;
+		output(simFile, time[x], liquidMass, Pc, thrust[x], tankPressure);//output to csv
 		Tt = T_Kelvin - 273.15;
-		if (liquidMass <= 0.05) { cout << "Empty"; simFile.close(); return 1; };
+		if (liquidMass <= 0.05) { cout << "Empty"; thrustRamp(-1, RampDownTime, thrust[x], timeStep, x, simFile); simFile.close(); return 1; };
 
 	}
 
@@ -321,4 +320,13 @@ double interpInjectorModel(double Tt, double Pc) {
 	}
 
 	return mDotInjector;
+}
+void thrustRamp(int dir,double Ramp, double FitThrust, double timestep, int x, ofstream &simfile) {
+	cout << "Ramping" << dir << endl;
+	double A = 1;
+	if (dir == -1) { A = FitThrust; }
+	int expFactor = exp(log(FitThrust) / Ramp);
+	for (int i = 0; i < (floor(Ramp / timestep)); i++) {
+		output(simfile, ((x + i)*timestep), 0, 0, (A*pow(expFactor, (i*timestep*dir))));
+	}
 }

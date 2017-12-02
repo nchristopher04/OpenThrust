@@ -43,7 +43,8 @@ void OptionFileParser::ReadFile()
 	mExitArea = mRocketValues["exitArea"];
 	mOxFuelRatio = mRocketValues["OF"];
 	mSolomonFlag = mRocketValues["solomonMode"];
-			
+	RampUpTime = mRocketValues["RampUpTime"];
+	RampDownTime = mRocketValues["RampDownTime"];
 	// To get the integer values from a double, they are rounded to nearest
 	// integer value as floating point number (round()), 0.1 is added to ensure 
 	// they are above the integer and then they are typecast into int which cuts 
