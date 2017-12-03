@@ -33,8 +33,7 @@ double time[1000], thrust[1000];		// Output arrays that give thrust over time
 
 RpaTable RpaTableArray;
 
-void thrustRamp(int dir, double Ramp, double FitThrust, double timestep, int x, ofstream &simfile);
-
+void thrustRamp(int dir, double Ramp, double FitThrust, double timestep, int &x, ofstream &simfile, int fitDegree);
 template <typename Arg, typename... Args>
 void output(ofstream& out, Arg&& arg, Args&&... args)
 {
@@ -162,13 +161,13 @@ int main()
 		// Creates outputs for each timestep
 		time[x] = x*timeStep;
 		thrust[x] = At*(Pc*PSI_TO_PA)*Cf;
-		if (x == 1) { thrustRamp(1,RampUpTime, thrust[x], timeStep, x, simFile); }
+		if (x == 0) { thrustRamp(1, RampUpTime, thrust[x], timeStep, x, simFile, 2);}
 		ISP += (thrust[x] / (9.81*mDotNozzle));
 		cout << "T+" << time[x] << " s =>>> Liquid Mass: " << liquidMass << "kg | Chamber Pressure: " << Pc << " psi | " <<
 			"Injector flow rate: " << mDotInjector << " kg/s | Tank Temperature" << T_Kelvin << " K" << endl;
 		output(simFile, time[x], liquidMass, Pc, thrust[x], tankPressure);//output to csv
 		Tt = T_Kelvin - 273.15;
-		if (liquidMass <= 0.05) { cout << "Empty"; thrustRamp(-1, RampDownTime, thrust[x], timeStep, x, simFile); simFile.close(); return 1; };
+		if (liquidMass <= 0.05) { cout << "Empty"; thrustRamp(-1, RampDownTime, thrust[x], timeStep, x, simFile,0); simFile.close(); return 1; };
 
 	}
 
@@ -321,12 +320,29 @@ double interpInjectorModel(double Tt, double Pc) {
 
 	return mDotInjector;
 }
-void thrustRamp(int dir,double Ramp, double FitThrust, double timestep, int x, ofstream &simfile) {
+void thrustRamp(int dir,double Ramp, double FitThrust, double timestep, int &x, ofstream &simfile, int fitDegree) {
 	cout << "Ramping" << dir << endl;
-	double A = 1;
-	if (dir == -1) { A = FitThrust; }
-	int expFactor = exp(log(FitThrust) / Ramp);
-	for (int i = 0; i < (floor(Ramp / timestep)); i++) {
-		output(simfile, ((x + i)*timestep), 0, 0, (A*pow(expFactor, (i*timestep*dir))));
+	double A = 1, curThrust = 0;
+	int steps = floor(Ramp / timestep);
+	if (dir == -1) { A = FitThrust;}
+	if (fitDegree == 0) {
+		double expFactor = exp(log(FitThrust) / Ramp);
+		for (int i = 0; i < steps; i++) {
+			curThrust = A*powf(expFactor, (i*timestep*dir));
+			output(simfile,x*timestep, 0, 0, curThrust);
+			thrust[x] = curThrust;
+			time[x] = x*timestep;
+			x++;
+		}
+	}
+	else{
+		double powerFactor = FitThrust / (pow(Ramp, fitDegree));
+		for (int i = 0; i < steps; i++) {
+			curThrust = powerFactor*pow(i*timestep,fitDegree);
+			output(simfile, x*timestep, 0, 0,curThrust);
+			thrust[x] = curThrust;
+			time[x] = x*timestep;
+			x++;
+		}
 	}
 }
