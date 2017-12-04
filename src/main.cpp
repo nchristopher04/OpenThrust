@@ -338,7 +338,7 @@ void thrustRamp(int dir,double Ramp, double FitThrust, double timestep, int &x, 
 	else{
 		double powerFactor = FitThrust / (pow(Ramp, fitDegree));
 		for (int i = 0; i < steps; i++) {
-			curThrust = powerFactor*pow(i*timestep,fitDegree);
+			curThrust = powerFactor*pow(i*timestep*A,fitDegree);
 			output(simfile, x*timestep, 0, 0,curThrust);
 			thrust[x] = curThrust;
 			time[x] = x*timestep;
