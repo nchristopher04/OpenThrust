@@ -66,6 +66,7 @@ int main()
 	double RampUpTime = UserOptions.RampUpTime;
 	
 	double liquidMass, vaporizedMass=0;
+	remove("output.csv");
 	ofstream simFile("output.csv");
 	simFile << "Time (s), Modeled Liquid Mass  ,  Modeled Chamber Pressure, Modeled Thrust, Modeled Tank Pressure" << '\n'; //setup basic output format
 	cout << "Input initial params." << endl;
@@ -101,11 +102,11 @@ int main()
 		return 1;
 	}
 	///////////////////
-
+	blowdownModel mainModel;
 
 
 	liquidMass = oxyMass;//suppress errors from calc below
-	tankProps(0, tankVolume, oxyMass, vaporizedMass, liquidMass, T_Kelvin, tankPressure); //calc initial liquid mass and pressure
+	mainModel.tankProps(0, tankVolume, oxyMass, vaporizedMass, liquidMass, T_Kelvin, tankPressure); //calc initial liquid mass and pressure
 	cout << "Initial liq Mass:"<<liquidMass;
 	for (int x = 0; x < 1000; x++) { //time steps
 		
@@ -156,7 +157,7 @@ int main()
 		liquidMass -= deltaM; //assumes pure liquid through injector
 		mDotInjector_old = mDotInjector;
 
-		tankProps(timeStep,tankVolume,oxyMass,vaporizedMass,liquidMass,T_Kelvin,tankPressure); //update new Temperature and tank pressure
+		mainModel.tankProps(timeStep,tankVolume,oxyMass,vaporizedMass,liquidMass,T_Kelvin,tankPressure); //update new Temperature and tank pressure
 		
 		// Creates outputs for each timestep
 		time[x] = x*timeStep;
@@ -167,7 +168,13 @@ int main()
 			"Injector flow rate: " << mDotInjector << " kg/s | Tank Temperature" << T_Kelvin << " K" << endl;
 		output(simFile, time[x], liquidMass, Pc, thrust[x], tankPressure);//output to csv
 		Tt = T_Kelvin - 273.15;
-		if (liquidMass <= 0.05) { cout << "Empty"; thrustRamp(-1, RampDownTime, thrust[x], timeStep, x, simFile,0); simFile.close(); return 1; };
+		if (liquidMass <= 0.05) { 
+			cout << "EMPTY" << endl << "Avg ISP (Liquid) " << ISP / (x - (RampUpTime / timeStep)) << endl;
+			thrustRamp(-1, RampDownTime, thrust[x], timeStep, x, simFile,0); 
+			simFile.close(); 
+			system("pause");
+			return 1; 
+		};
 
 	}
 
@@ -320,13 +327,13 @@ double interpInjectorModel(double Tt, double Pc) {
 
 	return mDotInjector;
 }
-void thrustRamp(int dir,double Ramp, double FitThrust, double timestep, int &x, ofstream &simfile, int fitDegree) {
+void thrustRamp(int dir,double RampTime, double FitThrust, double timestep, int &x, ofstream &simfile, int fitDegree) { //Direction is 1,-1, FitThrust is thrust value to satr or end at, fit degree is degree of curve to fit 0 for expoential
 	cout << "Ramping" << dir << endl;
 	double A = 1, curThrust = 0;
-	int steps = floor(Ramp / timestep);
+	int steps = floor(RampTime / timestep);
 	if (dir == -1) { A = FitThrust;}
-	if (fitDegree == 0) {
-		double expFactor = exp(log(FitThrust) / Ramp);
+	if (fitDegree == 0) { //exponential curve fit.
+		double expFactor = exp(log(FitThrust) / RampTime);
 		for (int i = 0; i < steps; i++) {
 			curThrust = A*powf(expFactor, (i*timestep*dir));
 			output(simfile,x*timestep, 0, 0, curThrust);
@@ -336,7 +343,7 @@ void thrustRamp(int dir,double Ramp, double FitThrust, double timestep, int &x, 
 		}
 	}
 	else{
-		double powerFactor = FitThrust / (pow(Ramp, fitDegree));
+		double powerFactor = FitThrust / (pow(RampTime, fitDegree));
 		for (int i = 0; i < steps; i++) {
 			curThrust = powerFactor*pow(i*timestep*A,fitDegree);
 			output(simfile, x*timestep, 0, 0,curThrust);
