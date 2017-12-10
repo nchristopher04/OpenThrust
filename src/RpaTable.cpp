@@ -102,7 +102,6 @@ RpaTable::RpaDataPoint RpaTable::LookUpRpa(double OF, double ChamberPressure)
 	{
 		throw(runtime_error("OF or Chamber Pressure out of bounds"));
 	}
-	
 	for (unsigned int i = 0; i < (mOfRatio.length()); i++)
 	{
 		if (mOfRatio[i] == OF)
@@ -129,4 +128,7 @@ RpaTable::RpaDataPoint RpaTable::LookUpRpa(double OF, double ChamberPressure)
 			}
 		}
 	}
+
+
+	throw(runtime_error("Failed RPA Lookup"));
 }
