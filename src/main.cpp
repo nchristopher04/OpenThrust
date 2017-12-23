@@ -327,29 +327,31 @@ double interpInjectorModel(double Tt, double Pc) {
 
 	return mDotInjector;
 }
-void thrustRamp(int dir,double RampTime, double FitThrust, double timestep, int &x, ofstream &simfile, int fitDegree) { //Direction is 1,-1, FitThrust is thrust value to satr or end at, fit degree is degree of curve to fit 0 for expoential
+void thrustRamp(int dir,double RampTime, double FitThrust, double timestep, int &x, ofstream &simfile, int fitDegree) { //Direction is 1,-1, FitThrust is thrust value to start or end at, fit degree is degree of curve to fit 0 for expoential
 	cout << "Ramping" << dir << endl;
 	double A = 1, curThrust = 0;
 	int steps = floor(RampTime / timestep);
 	if (dir == -1) { A = FitThrust;}
 	if (fitDegree == 0) { //exponential curve fit.
 		double expFactor = exp(log(FitThrust) / RampTime);
-		for (int i = 0; i < steps; i++) {
+		for (int i = 1; i < steps; i++) {
+			x++;
 			curThrust = A*powf(expFactor, (i*timestep*dir));
 			output(simfile,x*timestep, 0, 0, curThrust);
 			thrust[x] = curThrust;
 			time[x] = x*timestep;
-			x++;
 		}
 	}
 	else{
 		double powerFactor = FitThrust / (pow(RampTime, fitDegree));
-		for (int i = 0; i < steps; i++) {
-			curThrust = powerFactor*pow(i*timestep*A,fitDegree);
+		for (int i = 1; i < steps; i++) {
+			x++;
+			curThrust = powerFactor*pow(i*timestep*dir,fitDegree);
 			output(simfile, x*timestep, 0, 0,curThrust);
 			thrust[x] = curThrust;
 			time[x] = x*timestep;
-			x++;
 		}
 	}
+	x++;
+	thrust[x] = FitThrust-A+1;
 }

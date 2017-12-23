@@ -10,7 +10,7 @@ private:
 
 public:
 void tankProps(double timeStep, double tankVolume, double oxyMass, double &vaporizedMass_prev, double &liquidMass_prev, double &T_Kelvin, double &TankPressure);
-double ventLosses(double Tankpressure);
+double ventLosses(double Tankpressure, double ambPressure, double ventArea);
 };
 
 #endif

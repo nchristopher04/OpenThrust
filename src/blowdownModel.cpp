@@ -44,7 +44,7 @@ void blowdownModel::tankProps(double timeStep, double tankVolume, double oxyMass
 	return;
 }
 
-double blowdownModel::ventLosses(double Tankpressure) {
+double blowdownModel::ventLosses(double Tankpressure, double ambPressure, double ventArea) {
 	double mVented;
-	return 0.0;
+	return mVented;
 }
