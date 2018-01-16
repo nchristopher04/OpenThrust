@@ -22,7 +22,6 @@ double R;								// Specific gas constant [kJ/kg*k]
 double Tc;								// Chamber temperature [k]
 double Cf;								// Thrust coefficient []
 double Tt, T_Kelvin;					// NOS Tank Temperature
-//int PcRound10;						// Casts chamber pressure to integer
 double err;								// Used for calculating relative error
 double tankPressure;					// Tank absolute pressure [psi]
 double ISP;
@@ -30,6 +29,7 @@ double ISP;
 double mDotNozzle, mDotInjector;		// Mass flow rates at the nozzle and the injector [kg/s]
 double mDotInjector_old;				//Prev iteration mass flow rate
 double time[1000], thrust[1000];		// Output arrays that give thrust over time
+double thrustCoefficientScalingFactor = 1;
 
 RpaTable RpaTableArray;
 
@@ -62,9 +62,9 @@ int main()
 	double tankVolume = UserOptions.mOxTankVolume;
 	double timeStep = UserOptions.mTimeStep;
 	double OF = UserOptions.mOxFuelRatio;
+	bool RPACf = UserOptions.mRPACf;
 	double RampDownTime = UserOptions.RampDownTime;
 	double RampUpTime = UserOptions.RampUpTime;
-	
 	double liquidMass, vaporizedMass=0;
 	remove("output.csv");
 	ofstream simFile("output.csv");
@@ -115,7 +115,7 @@ int main()
 			PcOld = Pc;
 			try {
 				for (int i = 0; i < 100; i++) {
-					interpRPAValues(PcOld, OF, k, R, Tc);
+					interpRPAValues(PcOld, OF, k, R, Tc, Cf);
 					mDotInjector = interpInjectorModel(Tt, PcOld);
 					mDotNozzle = massFlowRateNozzle(mDotInjector, OF);
 					PcNew = calcPc(At, mDotNozzle, k, R, Tc);
@@ -132,12 +132,11 @@ int main()
 			}
 		}
 		else if (UserOptions.mFlowModel==1) { 
-			interpRPAValues(Pc, OF, k, R, Tc);
+			interpRPAValues(Pc, OF, k, R, Tc, Cf);
 			mDotNozzle = massFlowRate(At, Pc, k, R, Tc);
 			mDotInjector = massFlowRateInjector(mDotNozzle, OF); 
 		}
-		Cf = thrustCoefficient(14.7, A2, Pc, At);
-
+		if (!RPACf) { Cf = thrustCoefficient(14.7, A2, Pc, At); } // Overrides RPA Cf with a calculated value
 		try { //catch negative flow exception, display to user and break loop
 			if (mDotNozzle < 0 || mDotInjector < 0) { throw runtime_error("massFlowNegative"); }
 		}
@@ -225,7 +224,7 @@ double thrustCoefficient(double Patm, double A2, double Pc, double At) {
 	return Cf; 
 }
 
-void RPALookup(double Pc, double OF, double &k, double &R, double &Tc) {
+void RPALookup(double Pc, double OF, double &k, double &R, double &Tc, double &Cf) {
 	// Find k, R, Tc from table and return them to the program
 	// Inputs in [psi], []
 	// No output but stores values in variables k, R, Tc
@@ -234,6 +233,7 @@ void RPALookup(double Pc, double OF, double &k, double &R, double &Tc) {
 	k = CombustionProps.KValue;
 	R = CombustionProps.RValue;
 	Tc = CombustionProps.ChamberTemperture;
+	Cf = CombustionProps.CfOpt*thrustCoefficientScalingFactor;
 }
 
 double bilinInterp(double x1, double x2, double y1, double y2,
@@ -257,41 +257,45 @@ double bilinInterp(double x1, double x2, double y1, double y2,
 	return P;
 }
 
-void interpRPAValues(double Pc, double OF, double &k, double &R, double &Tc) {
+void interpRPAValues(double Pc, double OF, double &k, double &R, double &Tc, double &Cf) {
 	
 	double OF1, OF2, Pc1, Pc2;				// Used to interpolate RPA values
 	double k1, k2, k3, k4;					// Used to interpolate k value
 	double R1, R2, R3, R4;					// Used to interpolate R value
 	double Tc1, Tc2, Tc3, Tc4;				// Used to interpolate Tc value
+	double Cf1, Cf2, Cf3, Cf4;
 	OF1 = floor(OF * 10) / 10;
 	OF2 = ceil(OF * 10) / 10;
 	Pc1 = floor(Pc / 10) * 10;
 	Pc2 = ceil(Pc / 10) * 10;
 	if (Pc1 != Pc2 && OF1 != OF2) {
-		RPALookup(Pc1, OF1, k1, R1, Tc1);
-		RPALookup(Pc1, OF2, k2, R2, Tc2);
-		RPALookup(Pc2, OF1, k3, R3, Tc3);
-		RPALookup(Pc2, OF2, k4, R4, Tc4);
+		RPALookup(Pc1, OF1, k1, R1, Tc1, Cf1);
+		RPALookup(Pc1, OF2, k2, R2, Tc2, Cf2);
+		RPALookup(Pc2, OF1, k3, R3, Tc3, Cf3);
+		RPALookup(Pc2, OF2, k4, R4, Tc4, Cf4);
 		k  = bilinInterp(Pc1, Pc2, OF1, OF2, k1, k2, k3, k4, Pc, OF);
 		R  = bilinInterp(Pc1, Pc2, OF1, OF2, R1, R2, R3, R4, Pc, OF);
 		Tc = bilinInterp(Pc1, Pc2, OF1, OF2, Tc1, Tc2, Tc3, Tc4, Pc, OF);
+		Cf = bilinInterp(Pc1, Pc2, OF1, OF2, Cf1, Cf2, Cf3, Cf4, Pc, OF);
 	}
 	else if (Pc1 != Pc2) {
-		RPALookup(Pc1, OF, k1, R1, Tc1);
-		RPALookup(Pc2, OF, k2, R2, Tc2);
+		RPALookup(Pc1, OF, k1, R1, Tc1, Cf1);
+		RPALookup(Pc2, OF, k2, R2, Tc2, Cf2);
 		k  = linInterp(Pc1, k1, Pc2, k2, Pc);
 		R  = linInterp(Pc1, R1, Pc2, R2, Pc);
 		Tc = linInterp(Pc1, Tc1, Pc2, Tc2, Pc);
+		Cf = linInterp(Pc1, Cf1, Pc2, Cf2, Pc);
 	}
 	else if (OF1 != OF2) {
-		RPALookup(Pc, OF1, k3, R3, Tc3);
-		RPALookup(Pc, OF2, k4, R4, Tc4);
-		k = linInterp(OF1, k1, OF2, k2, OF);
-		R = linInterp(OF1, R1, OF2, R2, OF);
-		Tc = linInterp(OF1, Tc1, OF2, Tc2, OF);
+		RPALookup(Pc, OF1, k3, R3, Tc3, Cf3);
+		RPALookup(Pc, OF2, k4, R4, Tc4, Cf4);
+		k = linInterp(OF1, k3, OF2, k4, OF);
+		R = linInterp(OF1, R3, OF2, R4, OF);
+		Tc = linInterp(OF1, Tc3, OF2, Tc4, OF);
+		Cf = linInterp(OF1, Cf3, OF2, Cf4, OF);
 	}
 	else {
-		RPALookup(Pc, OF, k, R, Tc);
+		RPALookup(Pc, OF, k, R, Tc, Cf);
 	}
 }
 

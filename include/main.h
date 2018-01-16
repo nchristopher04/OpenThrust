@@ -10,6 +10,6 @@ void RPALookup(double Pc, double OF, double &k, double &R, double &Tc);
 double nox_vp(double T_Celcius);
 double linInterp(double x1, double y1, double x2, double y2, double x);
 double bilinInterp(double x1, double x2, double y1, double y2, double P11, double P12, double P21, double P22, double a, double b);
-void interpRPAValues(double Pc, double OF, double &k, double &R, double &Tc);
+void interpRPAValues(double Pc, double OF, double &k, double &R, double &Tc, double &Cf);
 double interpInjectorModel(double Tt, double Pc);
 #endif // ! MAIN_H

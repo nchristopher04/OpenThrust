@@ -370,11 +370,11 @@ void SolomonModel::TimeStepLoop()
 		double OF = 2.1;
 		double nozzleThroatArea = 0.000382646;
 		double nozzleExitArea = 0.00181001;
-		interpRPAValues(outP, OF, k, R, Tc);
+		interpRPAValues(outP, OF, k, R, Tc, Cf);
 		double mDotNoz = mDot*((1 + OF) / OF);
 		double outP = (mDotNoz*sqrt(k*R*Tc)) / (nozzleThroatArea * k * sqrt(pow((2 / (k + 1)), ((k + 1) / (k - 1)))));
 		outP = outP / (6894.76);
-		Cf = thrustCoefficient(14.7, nozzleExitArea, outP, nozzleThroatArea);
+		//Cf = thrustCoefficient(14.7, nozzleExitArea, outP, nozzleThroatArea);
 		double thrust = nozzleThroatArea*(outP*6894.76)*Cf;
 		///////////////////////
 

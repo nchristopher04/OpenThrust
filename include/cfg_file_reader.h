@@ -27,6 +27,7 @@ class OptionFileParser
 		int mFlowModel;
 		int mIntegrationType;
 		bool mSolomonFlag;
+		bool mRPACf;
 		double RampUpTime;
 		double RampDownTime;
 
