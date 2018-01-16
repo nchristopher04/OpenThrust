@@ -28,6 +28,8 @@ class OptionFileParser
 		int mIntegrationType;
 		bool mSolomonFlag;
 		bool mRPACf;
+		double RampUpTime;
+		double RampDownTime;
 
 
 		// Methods
